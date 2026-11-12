@@ -76,6 +76,32 @@ Xcode; they cannot be produced on Windows.
 RevenueCat SDK keys and AdMob IDs are public app configuration, not server
 secrets. Do not put private service credentials in `VITE_*` variables.
 
+## Legal drafts and owner input
+
+The app's **Info** tab links to German-language drafts for the imprint,
+privacy notice, and terms under `public/legal/`. They are intentionally
+marked as drafts and must not be published as final legal notices. The privacy
+notice describes the current offline/local-save design and identifies
+RevenueCat, Apple/Google billing, and AdMob/UMP as conditional providers when
+those features are enabled.
+
+Copy `legal/operator-details.template.md` to the ignored local file
+`legal/operator-details.local.md` and complete it on your computer. The local
+file is excluded from Git. It lists the publisher, contact, hosting, target
+countries, and data-processing facts needed to complete the drafts. Do not
+put passwords, private API keys, payment details, or signing keys in it.
+Have the final notices reviewed for the publisher's jurisdiction and actual
+provider configuration. The contact details supplied so far are included in
+the drafts; the full legal name, legal form, and complete postal address are
+still needed before the imprint can be finalized.
+
+The existing Stripe account is not needed for mobile-game purchases: the
+pass and hint credits are digital app functionality, so the standard Google
+Play / Apple distribution uses their in-app billing systems. Stripe could be
+considered for a separate web checkout only after deciding how web purchases
+are securely verified and made compatible with the no-account, offline-first
+design. Do not send Stripe secret keys.
+
 ## Release status
 
 This repository contains the playable game, offline progress, native project

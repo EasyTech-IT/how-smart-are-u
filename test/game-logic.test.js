@@ -2,11 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildPuzzle,
+  canonicalizeFoundWords,
   CATEGORIES,
+  getLocalizedCatalog,
   GRID_SIZE,
   LEVELS,
   LEVELS_PER_CATEGORY,
   matchPath,
+  localizeFoundWords,
   pathBetween
 } from "../src/game-logic.js";
 
@@ -37,6 +40,39 @@ test("level size and word count never decrease as difficulty advances", () => {
   }
   assert.equal(LEVELS[0].gridSize, 8);
   assert.equal(LEVELS.at(-1).gridSize, 13);
+});
+
+test("German and Spanish catalogs preserve IDs, progress mapping and grid-safe words", () => {
+  for (const language of ["de", "es"]) {
+    const localized = getLocalizedCatalog(language);
+    assert.deepEqual(localized.categories.map((category) => category.id), CATEGORIES.map((category) => category.id));
+    assert.deepEqual(localized.levels.map((level) => level.id), LEVELS.map((level) => level.id));
+
+    for (const category of localized.categories) {
+      assert.equal(category.words.length, 30);
+      assert.equal(new Set(category.words).size, category.words.length);
+      assert.ok(category.words.every((word) => /^[A-Z]+$/.test(word) && word.length <= 13));
+    }
+
+    for (const [index, level] of localized.levels.entries()) {
+      const source = LEVELS[index];
+      assert.deepEqual(level.canonicalWords, source.words);
+      assert.equal(level.words.length, source.words.length);
+      assert.ok(level.words.every((word) => word.length <= level.gridSize));
+      assert.doesNotThrow(() => buildPuzzle(level));
+    }
+  }
+});
+
+test("partial found-word progress survives switching between catalog languages", () => {
+  const englishLevel = LEVELS.find((level) => level.categoryId === "hearth" && level.localLevel === 4);
+  const germanLevel = getLocalizedCatalog("de").levels.find((level) => level.id === englishLevel.id);
+  const spanishLevel = getLocalizedCatalog("es").levels.find((level) => level.id === englishLevel.id);
+  const foundGerman = new Set(germanLevel.words.slice(0, 2));
+  const savedEnglish = canonicalizeFoundWords(germanLevel, foundGerman);
+
+  assert.deepEqual(savedEnglish, englishLevel.words.slice(0, 2));
+  assert.deepEqual(localizeFoundWords(spanishLevel, savedEnglish), new Set(spanishLevel.words.slice(0, 2)));
 });
 
 test("early levels use only horizontal and vertical placements", () => {

@@ -55,6 +55,7 @@ button:disabled {
   overflow: hidden;
   padding: max(0px, env(safe-area-inset-top)) 16px max(0px, env(safe-area-inset-bottom));
   isolation: isolate;
+  background: var(--color-bg);
 }
 
 .app-shell.has-ad {
@@ -714,7 +715,7 @@ h2 {
   background: var(--color-cell);
   color: #294333;
   cursor: pointer;
-  font-size: clamp(9px, 3.2vw, 18px);
+  font-size: clamp(11px, 3.8vw, 18px);
   font-weight: 800;
   line-height: 1;
   transition: background-color 110ms var(--ease-out), color 110ms var(--ease-out), transform 110ms var(--ease-out);
@@ -748,35 +749,39 @@ h2 {
   color: #fff3dc;
 }
 
-.puzzle-footer {
-  flex: 0 0 auto;
-  padding: 5px 1px 5px;
-}
-
 .word-targets {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 5px;
-  margin-bottom: 7px;
 }
 
 .word-target {
   display: grid;
   min-width: 0;
-  min-height: 29px;
+  min-height: 34px;
   place-items: center;
-  overflow: hidden;
-  padding: 0 3px;
+  padding: 3px 4px;
   border: 1px solid var(--color-seam);
   border-radius: 9px;
   background: rgba(19, 47, 37, .7);
   color: var(--color-text);
-  font-size: 9px;
+  font-size: clamp(11px, 3.4vw, 14px);
   font-weight: 800;
   letter-spacing: .035em;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+  text-align: center;
   transition: background-color 120ms var(--ease-out), color 120ms var(--ease-out), opacity 120ms var(--ease-out);
+}
+
+.puzzle-wordlist {
+  flex: 0 0 auto;
+  padding: 2px 0 5px;
+}
+
+.puzzle-footer {
+  flex: 0 0 auto;
+  padding: 3px 1px 5px;
 }
 
 .word-target[data-found="true"] {
@@ -785,6 +790,111 @@ h2 {
   color: var(--color-success);
   text-decoration: line-through;
   text-decoration-color: var(--color-success);
+}
+
+.settings-panel {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 10px;
+  flex: 0 0 auto;
+  padding: 10px;
+  border: 1px solid var(--color-seam);
+  border-radius: 15px;
+  background: rgba(19, 47, 37, .58);
+}
+
+.settings-panel h2 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 15px;
+}
+
+.setting-row {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+  color: var(--color-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.setting-row select {
+  width: 100%;
+  min-height: 31px;
+  padding: 0 7px;
+  border: 1px solid var(--color-seam);
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.setting-toggle {
+  grid-template-columns: minmax(0, 1fr) 24px;
+  align-items: center;
+  min-height: 28px;
+}
+
+.setting-toggle input {
+  width: 22px;
+  height: 22px;
+  margin: 0;
+  accent-color: var(--color-success);
+}
+
+.settings-note {
+  grid-column: 1 / -1;
+  min-height: 12px;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+#screen-info {
+  gap: 4px;
+}
+
+#screen-info .screen-heading {
+  padding-top: 8px;
+  padding-bottom: 4px;
+}
+
+#screen-info .screen-heading h1 {
+  font-size: clamp(23px, 5.5vw, 31px);
+}
+
+#screen-info .screen-heading > p:last-child {
+  margin-top: 6px;
+  font-size: 10px;
+}
+
+#screen-info .info-links {
+  gap: 5px;
+}
+
+#screen-info .info-link {
+  min-height: 42px;
+  padding: 6px 10px;
+  border-radius: 11px;
+}
+
+#screen-info .info-link > span:first-child {
+  gap: 2px;
+}
+
+#screen-info .info-link strong {
+  font-size: 12px;
+}
+
+#screen-info .info-link small {
+  font-size: 9px;
+}
+
+#screen-info .info-disclaimer {
+  margin-top: 5px;
+  font-size: 9px;
+  line-height: 1.3;
 }
 
 .puzzle-controls {
@@ -814,7 +924,7 @@ h2 {
 
 .bottom-nav {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   align-items: center;
   padding: 7px 0 max(7px, env(safe-area-inset-bottom));
@@ -851,6 +961,52 @@ h2 {
   border-color: rgba(229, 184, 96, .16);
   background: rgba(20, 48, 37, .5);
   color: var(--color-gold);
+}
+
+.info-links {
+  display: grid;
+  gap: 8px;
+}
+
+.info-link {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-seam);
+  border-radius: 16px;
+  background: linear-gradient(145deg, rgba(49, 79, 61, .94), rgba(32, 63, 49, .96));
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.info-link > span:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.info-link strong {
+  font-family: var(--font-display);
+  font-size: 15px;
+}
+
+.info-link small {
+  color: var(--color-text-muted);
+  font-size: 10px;
+}
+
+.info-link > span:last-child {
+  color: var(--color-gold);
+  font-size: 20px;
+}
+
+.info-disclaimer {
+  margin: 12px 2px 0;
+  color: var(--color-warning);
+  font-size: 10px;
+  line-height: 1.45;
 }
 
 .shop-card {
@@ -908,6 +1064,11 @@ h2 {
   line-height: 1.45;
 }
 
+.shop-copy .pass-benefits {
+  color: var(--color-gold);
+  font-weight: 800;
+}
+
 .shop-action {
   min-height: 39px;
   padding: 0 12px;
@@ -954,6 +1115,82 @@ h2 {
   box-shadow: 0 18px 50px rgba(5, 20, 14, .42);
   color: var(--color-text);
   text-align: center;
+}
+
+.app-shell[data-theme="paper"] {
+  color-scheme: light;
+  color: var(--color-text);
+  --color-bg: #f1e8d2;
+  --color-surface: #fff9e8;
+  --color-surface-raised: #eadfbe;
+  --color-text: #2e4635;
+  --color-text-muted: #596c59;
+  --color-accent: #bb6944;
+  --color-success: #637b43;
+  --color-found: #d3dfa8;
+  --color-warning: #855d21;
+  --color-gold: #805c24;
+  --color-seam: rgba(47, 64, 45, .2);
+  --color-focus: #805a22;
+  --color-board: #e8dcc0;
+  --color-cell: #fffdf3;
+}
+
+.app-shell[data-theme="paper"]::before {
+  opacity: .12;
+}
+
+.app-shell[data-theme="paper"]::after {
+  background: linear-gradient(180deg, rgba(251, 247, 232, .88), rgba(243, 235, 215, .96));
+}
+
+.app-shell[data-theme="paper"] .offline-badge,
+.app-shell[data-theme="paper"] .hint-wallet,
+.app-shell[data-theme="paper"] .settings-panel,
+.app-shell[data-theme="paper"] .word-target,
+.app-shell[data-theme="paper"] .info-link,
+.app-shell[data-theme="paper"] .shop-card,
+.app-shell[data-theme="paper"] .shop-mark {
+  background: rgba(255, 251, 235, .82);
+}
+
+.app-shell[data-theme="paper"] .category-card,
+.app-shell[data-theme="paper"] .level-node,
+.app-shell[data-theme="paper"] .nav-button.is-current {
+  border-color: rgba(71, 91, 56, .22);
+  background: linear-gradient(155deg, rgba(255, 250, 233, .96), rgba(232, 223, 195, .98));
+  color: var(--color-text);
+}
+
+.app-shell[data-theme="paper"] .category-emblem {
+  border-color: rgba(71, 91, 56, .2);
+  background: rgba(224, 216, 186, .78);
+  color: var(--color-gold);
+}
+
+.app-shell[data-theme="paper"] .pass-card {
+  border-color: rgba(140, 103, 45, .28);
+  background: linear-gradient(145deg, #f3e5c7, #e6dfc6);
+}
+
+.app-shell[data-theme="paper"] .puzzle-progress {
+  background: rgba(71, 91, 56, .15);
+}
+
+.app-shell[data-theme="paper"] .completion-dialog {
+  border-color: var(--color-seam);
+  background: linear-gradient(155deg, #fff9e8, #e9dfc2);
+  color: var(--color-text);
+}
+
+.app-shell[data-theme="paper"] .completion-dialog::backdrop {
+  background: rgba(42, 48, 36, .44);
+}
+
+.app-shell[data-theme="paper"] .screen-heading h1,
+.app-shell[data-theme="paper"] .home-copy h1,
+.app-shell[data-theme="paper"] .game-heading h1 {
+  text-shadow: none;
 }
 
 .completion-dialog::backdrop {
@@ -1108,7 +1345,7 @@ h2 {
   }
 
   .letter-grid {
-    width: min(100%, 410px, calc(100dvh - 290px));
+    width: min(100%, 410px, calc(100dvh - 340px));
   }
 
   .pass-card {
@@ -1188,7 +1425,7 @@ h2 {
   #screen-game.is-active {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(150px, .55fr);
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     column-gap: 16px;
   }
 
@@ -1197,8 +1434,13 @@ h2 {
     grid-column: 1 / -1;
   }
 
-  .puzzle-board-wrap {
+  .puzzle-wordlist {
     grid-row: 3;
+    grid-column: 2;
+  }
+
+  .puzzle-board-wrap {
+    grid-row: 3 / 5;
     grid-column: 1;
   }
 
@@ -1210,7 +1452,7 @@ h2 {
   .puzzle-footer {
     display: flex;
     flex-direction: column;
-    grid-row: 3;
+    grid-row: 4;
     grid-column: 2;
     justify-content: center;
   }

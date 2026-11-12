@@ -1,5 +1,12 @@
-const CACHE_NAME = "moss-and-letters-shell-v5";
+const CACHE_NAME = "moss-and-letters-shell-v8";
 const INDEX_URL = new URL("./index.html", self.registration.scope).href;
+const LEGAL_URLS = [
+  "./legal/datenschutz.html",
+  "./legal/impressum.html",
+  "./legal/nutzungsbedingungen.html",
+  "./legal/legal.css"
+]
+  .map((path) => new URL(path, INDEX_URL).href);
 
 self.addEventListener("install", (event) => {
   event.waitUntil((async () => {
@@ -22,7 +29,7 @@ self.addEventListener("install", (event) => {
     }
     const cache = await caches.open(CACHE_NAME);
     await cache.put(INDEX_URL, response);
-    await cache.addAll([...new Set(resources)]);
+    await cache.addAll([...new Set([...resources, ...LEGAL_URLS])]);
   })());
   self.skipWaiting();
 });
@@ -45,7 +52,10 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).catch(() => caches.match(INDEX_URL, { ignoreVary: true })));
+    event.respondWith(fetch(request).catch(async () =>
+      (await caches.match(request, { ignoreVary: true })) ||
+      caches.match(INDEX_URL, { ignoreVary: true })
+    ));
     return;
   }
 

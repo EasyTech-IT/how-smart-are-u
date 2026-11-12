@@ -1,3 +1,5 @@
+import { gameLocales } from "./game-locales.js";
+
 export const GRID_SIZE = 9;
 export const LEVELS_PER_CATEGORY = 25;
 
@@ -115,6 +117,44 @@ export const LEVELS = CATEGORIES.flatMap((category, categoryIndex) =>
 );
 
 export const PUZZLES = LEVELS;
+
+export function getLocalizedCatalog(language) {
+  const localized = gameLocales[language];
+  if (!localized) return { categories: CATEGORIES, levels: LEVELS };
+
+  const categories = CATEGORIES.map((category, index) => ({
+    ...category,
+    ...localized[index]
+  }));
+  const levels = LEVELS.map((level) => {
+    const categoryIndex = CATEGORIES.findIndex((category) => category.id === level.categoryId);
+    const sourceWords = CATEGORIES[categoryIndex].words;
+    const localizedCategory = categories[categoryIndex];
+    return {
+      ...level,
+      categoryName: localizedCategory.name,
+      canonicalWords: level.words,
+      words: level.words.map((word) =>
+        localizedCategory.words[sourceWords.indexOf(word)]
+      )
+    };
+  });
+  return { categories, levels };
+}
+
+export function canonicalizeFoundWords(level, words) {
+  const found = new Set(words);
+  const canonicalWords = level.canonicalWords || level.words;
+  return level.words.flatMap((word, index) =>
+    found.has(word) ? [canonicalWords[index]] : []
+  );
+}
+
+export function localizeFoundWords(level, words) {
+  const found = new Set(words);
+  const canonicalWords = level.canonicalWords || level.words;
+  return new Set(level.words.filter((_, index) => found.has(canonicalWords[index])));
+}
 
 const DIRECTIONS = [
   [-1, -1], [-1, 0], [-1, 1],

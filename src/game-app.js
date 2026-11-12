@@ -1,10 +1,16 @@
 import {
   buildPuzzle,
+  canonicalizeFoundWords,
   CATEGORIES,
+  getLocalizedCatalog,
   LEVELS,
+  localizeFoundWords,
   matchPath,
   pathBetween
 } from "./game-logic.js";
+import { formatCopy } from "./game-copy.js";
+import { playUiSound, setAmbience } from "./game-audio.js";
+import { loadSettings, saveSettings } from "./game-settings.js";
 import {
   canAccessCategory,
   completeLevel,
@@ -28,6 +34,9 @@ const elements = {
   adSlot: document.querySelector("#ad-slot"),
   bottomNav: document.querySelector("#bottom-nav"),
   walletCount: document.querySelector("#wallet-count"),
+  walletLabel: document.querySelector("#wallet-label"),
+  homeTitleFirst: document.querySelector("#home-title-first"),
+  homeTitleSecond: document.querySelector("#home-title-second"),
   playButton: document.querySelector("#play-button"),
   playLabel: document.querySelector("#play-label"),
   homeProgress: document.querySelector("#home-progress"),
@@ -59,6 +68,11 @@ const elements = {
   restorePurchasesButton: document.querySelector("#restore-purchases-button"),
   passPrice: document.querySelector("#pass-price"),
   storeNote: document.querySelector("#store-note"),
+  languageSetting: document.querySelector("#language-setting"),
+  themeSetting: document.querySelector("#theme-setting"),
+  soundSetting: document.querySelector("#sound-setting"),
+  ambienceSetting: document.querySelector("#ambience-setting"),
+  settingsNote: document.querySelector("#settings-note"),
   liveAnnouncement: document.querySelector("#live-announcement")
 };
 
@@ -74,6 +88,9 @@ try {
   };
 }
 let progress = loaded.progress;
+const loadedSettings = loadSettings(storage);
+let settings = loadedSettings.settings;
+let catalog = getLocalizedCatalog(settings.language);
 let currentScreen = "home";
 let selectedCategoryId = progress.activeCategoryId;
 let currentLevel = null;
@@ -87,7 +104,7 @@ let pointerStartIndex = null;
 let activePointerId = null;
 let hintedWord = null;
 let hintTimer = null;
-let storeState = { ready: false, reason: "Store products are not configured yet.", hasPass: false };
+let storeState = { ready: false, reason: "", hasPass: false };
 let adsState = { ready: false, bannerId: "" };
 let bannerVisible = false;
 let bannerUpdate = Promise.resolve();
@@ -96,6 +113,89 @@ function setMessage(message, kind = "info") {
   elements.gameMessage.textContent = message;
   elements.gameMessage.dataset.kind = kind;
   elements.liveAnnouncement.textContent = message;
+}
+
+function t(key, values) {
+  return formatCopy(settings.language, key, values);
+}
+
+function saveGameSettings() {
+  try {
+    if (!storage) throw new Error("Device storage is unavailable.");
+    saveSettings(storage, settings);
+    elements.settingsNote.textContent = t("settingsSaved");
+  } catch (error) {
+    console.error("Settings could not be saved.", error);
+    elements.settingsNote.textContent = t("settingsSaveError");
+  }
+}
+
+function applyTranslations() {
+  document.documentElement.lang = settings.language;
+  const targets = [
+    ["#offline-label", "offlineReady"],
+    ["#home-eyebrow", "homeEyebrow"],
+    ["#home-description", "homeDescription"],
+    ["#categories-eyebrow", "categoriesEyebrow"],
+    ["#categories-title", "categoriesTitle"],
+    ["#categories-description", "categoriesDescription"],
+    ["#back-categories", "backToCategories", "aria-label"],
+    ["#back-levels", "backToLevels", "aria-label"],
+    ["#puzzle-progress", "puzzleProgressAria", "aria-label"],
+    ["#shop-eyebrow", "shopEyebrow"],
+    ["#shop-title", "shopTitle"],
+    ["#shop-description", "shopDescription"],
+    ["#pass-eyebrow", "passEyebrow"],
+    ["#pass-title", "passTitle"],
+    ["#pass-description", "passDescription"],
+    ["#pass-benefits", "passBenefits"],
+    ["#hints-eyebrow", "hintsEyebrow"],
+    ["#hints-title", "hintsTitle"],
+    ["#hints-description", "hintsDescription"],
+    ["#info-eyebrow", "infoEyebrow"],
+    ["#info-title", "infoTitle"],
+    ["#info-description", "infoDescription"],
+    ["#settings-title", "settingsTitle"],
+    ["#language-label", "languageLabel"],
+    ["#theme-label", "themeLabel"],
+    ["#theme-dark", "themeDark"],
+    ["#theme-paper", "themePaper"],
+    ["#sound-label", "soundLabel"],
+    ["#ambience-label", "ambienceLabel"],
+    ["#privacy-title", "privacyTitle"],
+    ["#privacy-description", "privacyDescription"],
+    ["#imprint-title", "imprintTitle"],
+    ["#imprint-description", "imprintDescription"],
+    ["#terms-title", "termsTitle"],
+    ["#terms-description", "termsDescription"],
+    ["#legal-links", "legalInformation", "aria-label"],
+    ["#legal-draft", "legalDraft"],
+    ["#nav-home", "navHome"],
+    ["#nav-levels", "navLevels"],
+    ["#nav-pass", "navPass"],
+    ["#nav-info", "navInfo"],
+    ["#hint-label", "hintButton"],
+    ["#completion-eyebrow", "completeEyebrow"],
+    ["#return-map-button", "backToMap"]
+  ];
+  for (const [selector, key, attribute] of targets) {
+    const node = document.querySelector(selector);
+    if (!node) continue;
+    if (attribute) node.setAttribute(attribute, t(key));
+    else node.textContent = t(key);
+  }
+  const [firstLine, secondLine] = t("homeTitle").split("\n");
+  elements.homeTitleFirst.textContent = firstLine;
+  elements.homeTitleSecond.textContent = secondLine;
+  elements.walletLabel.setAttribute("aria-label", t("ariaWallet"));
+  elements.bottomNav.setAttribute("aria-label", t("mainNavigation"));
+  elements.categoryGrid.setAttribute("aria-label", t("ariaCategories"));
+  elements.wordTargets.setAttribute("aria-label", t("wordsToFind"));
+  elements.languageSetting.value = settings.language;
+  elements.themeSetting.value = settings.theme;
+  elements.soundSetting.checked = settings.sound;
+  elements.ambienceSetting.checked = settings.ambience;
+  elements.app.dataset.theme = settings.theme;
 }
 
 function announce(message) {
@@ -108,9 +208,21 @@ function persistProgress() {
     saveProgress(storage, progress);
     return true;
   } catch {
-    setMessage("Progress could not be saved on this device. Check available storage.", "error");
-    announce("Progress could not be saved on this device.");
+    setMessage(t("progressSaveWarning"), "error");
+    announce(t("progressSaveWarning"));
     return false;
+  }
+}
+
+function playSound(kind) {
+  if (!settings.sound) return;
+  try {
+    if (!playUiSound(kind)) {
+      elements.settingsNote.textContent = t("audioUnavailable");
+    }
+  } catch (error) {
+    console.error("Interface sound could not be played.", error);
+    elements.settingsNote.textContent = t("audioError");
   }
 }
 
@@ -121,18 +233,18 @@ function completedCount(categoryId) {
 }
 
 function nextPlayableLevel(categoryId = progress.activeCategoryId) {
-  const level = LEVELS.find((item) =>
+  const level = catalog.levels.find((item) =>
     item.categoryId === categoryId &&
     !progress.completedLevelIds.includes(item.id) &&
     isLevelUnlocked(item, progress)
   );
-  return level || LEVELS.find((item) => item.categoryId === categoryId) || LEVELS[0];
+  return level || catalog.levels.find((item) => item.categoryId === categoryId) || catalog.levels[0];
 }
 
 function updateWallet() {
   elements.walletCount.textContent = String(progress.hintCredits);
   elements.hintCount.textContent = String(progress.hintCredits);
-  elements.hintButton.setAttribute("aria-label", `Use a hint. ${progress.hintCredits} hint credits remaining.`);
+  elements.hintButton.setAttribute("aria-label", t("hintButtonAria", { count: progress.hintCredits }));
 }
 
 function showScreen(screen) {
@@ -156,7 +268,7 @@ function showScreen(screen) {
 function syncAdBanner() {
   bannerUpdate = bannerUpdate.then(async () => {
     const shouldShow = adsState.ready && !progress.hasPass &&
-      currentScreen !== "game" && currentScreen !== "shop";
+      currentScreen !== "game" && currentScreen !== "shop" && currentScreen !== "info";
     if (shouldShow && !bannerVisible) {
       elements.app.classList.add("has-ad");
       elements.adSlot.hidden = false;
@@ -185,10 +297,12 @@ function syncAdBanner() {
 function renderHome() {
   const level = nextPlayableLevel();
   const completed = progress.completedLevelIds.length;
-  elements.playLabel.textContent = completed ? `Continue · Level ${level.number}` : "Start your first trail";
+  elements.playLabel.textContent = completed
+    ? t("playContinue", { level: level.number })
+    : t("playStart");
   elements.homeProgress.textContent = completed
-    ? `${completed} of 200 trails found · ${progress.hintCredits} hint credits`
-    : "200 little discoveries are waiting";
+    ? t("homeProgress", { completed, hints: progress.hintCredits })
+    : t("homeStartProgress");
   updateWallet();
 }
 
@@ -198,22 +312,31 @@ function renderStoreState() {
   const hintPackage = storeState.hintsPackage;
   elements.buyPassButton.disabled = !storeState.ready || !passPackage || ownsPass;
   elements.buyPassButton.textContent = ownsPass
-    ? "Pass owned"
+    ? t("passOwned")
     : passPackage
-      ? `Buy pass · ${passPackage.product.priceString}`
-      : "Store setup needed";
+      ? t("buyPass", { price: passPackage.product.priceString })
+      : t("storeSetupNeeded");
   elements.passPrice.textContent = passPackage
     ? passPackage.product.priceString
-    : "Price set in the app store";
+    : t("priceInStore");
   elements.buyHintsButton.disabled = !storeState.ready || !hintPackage;
   elements.buyHintsButton.textContent = hintPackage
-    ? `Get 20 hints · ${hintPackage.product.priceString}`
-    : "Store setup needed";
+    ? t("buyHints", { price: hintPackage.product.priceString })
+    : t("storeSetupNeeded");
   elements.restorePurchasesButton.disabled = !storeState.ready;
-  elements.storeNote.textContent = storeState.reason ||
-    (storeState.ready
-      ? "Purchases use the official Apple App Store or Google Play billing."
-      : "Store products will be enabled after native store setup.");
+  elements.restorePurchasesButton.textContent = t("restorePurchases");
+  elements.storeNote.textContent = localizedStoreReason() ||
+    (storeState.ready ? t("storeReady") : t("storeNotReady"));
+}
+
+function localizedStoreReason() {
+  const reason = storeState.reason;
+  if (!reason) return "";
+  if (reason.includes("Purchases are available in the Android and iOS apps.")) return t("storeNativeOnly");
+  if (reason.includes("Add the RevenueCat public SDK key")) return t("storeKeyMissing");
+  if (reason.includes("No current RevenueCat offering")) return t("storeOfferMissing");
+  if (reason.includes("The store could not be reached.")) return t("storeUnavailable");
+  return reason;
 }
 
 function renderCategories() {
@@ -229,7 +352,7 @@ function renderCategories() {
     wonder: "◇"
   };
 
-  for (const [index, category] of CATEGORIES.entries()) {
+  for (const [index, category] of catalog.categories.entries()) {
     const count = completedCount(category.id);
     const accessible = canAccessCategory(category.id, progress);
     const card = document.createElement("button");
@@ -238,8 +361,10 @@ function renderCategories() {
     card.dataset.categoryId = category.id;
     card.dataset.locked = String(!accessible);
     card.style.setProperty("--card-order", String(index));
-    card.setAttribute("aria-label",
-      `${category.name}, ${accessible ? `${count} of 25 levels complete` : "locked with the one-time pass"}`);
+    card.setAttribute("aria-label", t("categoryAria", {
+      name: category.name,
+      progress: accessible ? t("categoryProgress", { completed: count }) : t("categoryLocked")
+    }));
 
     const emblem = document.createElement("span");
     emblem.className = "category-emblem";
@@ -250,7 +375,9 @@ function renderCategories() {
     const title = document.createElement("strong");
     title.textContent = category.name;
     const subtitle = document.createElement("small");
-    subtitle.textContent = accessible ? `${count} / 25 trails` : "Pass chapter";
+    subtitle.textContent = accessible
+      ? t("categoryProgress", { completed: count })
+      : t("categoryLocked");
     copy.append(title, subtitle);
     const marker = document.createElement("span");
     marker.className = "category-marker";
@@ -262,11 +389,11 @@ function renderCategories() {
 }
 
 function openCategory(categoryId) {
-  const category = CATEGORIES.find((item) => item.id === categoryId);
+  const category = catalog.categories.find((item) => item.id === categoryId);
   if (!category) return;
   if (!canAccessCategory(category.id, progress)) {
     showScreen("shop");
-    elements.storeNote.textContent = `${category.name} is part of the one-time pass. Store products are not configured yet.`;
+    elements.storeNote.textContent = t("storeSetupMessage", { category: category.name });
     return;
   }
   selectedCategoryId = category.id;
@@ -279,12 +406,13 @@ function openCategory(categoryId) {
 }
 
 function renderLevels() {
-  const levels = LEVELS.filter((level) => level.categoryId === selectedCategoryId);
-  const category = CATEGORIES.find((item) => item.id === selectedCategoryId);
+  const levels = catalog.levels.filter((level) => level.categoryId === selectedCategoryId);
+  const category = catalog.categories.find((item) => item.id === selectedCategoryId);
   const completed = completedCount(selectedCategoryId);
-  elements.chapterCount.textContent = `${completed} / ${levels.length}`;
+  elements.chapterCount.textContent = t("levelCount", { completed, total: levels.length });
   elements.levelPath.replaceChildren();
   elements.levelPath.style.setProperty("--level-count", String(levels.length));
+  elements.levelPath.setAttribute("aria-label", t("levelsAria"));
 
   for (const level of levels) {
     const isComplete = progress.completedLevelIds.includes(level.id);
@@ -297,8 +425,11 @@ function renderLevels() {
     button.dataset.current = String(level.id === progress.activeLevelId);
     button.disabled = !unlocked;
     button.textContent = isComplete ? "✓" : unlocked ? String(level.localLevel) : "·";
-    button.setAttribute("aria-label",
-      `${category.name}, level ${level.localLevel}${isComplete ? ", completed" : unlocked ? ", ready" : ", locked"}`);
+    button.setAttribute("aria-label", t("levelAria", {
+      category: category.name,
+      level: level.localLevel,
+      state: isComplete ? t("levelCompleted") : unlocked ? t("levelReady") : t("levelLocked")
+    }));
     button.addEventListener("click", () => startLevel(level));
     elements.levelPath.append(button);
   }
@@ -306,7 +437,7 @@ function renderLevels() {
 
 function showLevelsForCurrentCategory() {
   if (!selectedCategoryId) selectedCategoryId = progress.activeCategoryId;
-  const category = CATEGORIES.find((item) => item.id === selectedCategoryId) || CATEGORIES[0];
+  const category = catalog.categories.find((item) => item.id === selectedCategoryId) || catalog.categories[0];
   elements.levelsKicker.textContent = category.name.toUpperCase();
   elements.levelsTitle.textContent = category.name;
   renderLevels();
@@ -315,7 +446,7 @@ function showLevelsForCurrentCategory() {
 
 function startLevel(level) {
   if (!isLevelUnlocked(level, progress)) {
-    setMessage("Finish the previous trail to open this one.", "warning");
+    setMessage(t("lockedTrail"), "warning");
     return;
   }
 
@@ -325,7 +456,8 @@ function startLevel(level) {
   progress.activeCategoryId = level.categoryId;
   progress.activeLevelId = level.id;
   const replaying = progress.completedLevelIds.includes(level.id);
-  foundWords = replaying ? new Set() : new Set(progress.foundByLevel[level.id] || []);
+  const foundCanonical = replaying ? [] : progress.foundByLevel[level.id] || [];
+  foundWords = localizeFoundWords(level, foundCanonical);
   if (replaying) progress.foundByLevel[level.id] = [];
   generatedPuzzle = buildPuzzle(level);
   focusIndex = 0;
@@ -333,13 +465,13 @@ function startLevel(level) {
   tapAnchor = null;
   hintedWord = null;
   elements.puzzleCategory.textContent = level.categoryName.toUpperCase();
-  elements.puzzleTitle.textContent = `Level ${level.localLevel}`;
-  elements.puzzleDifficulty.textContent = level.difficulty;
+  elements.puzzleTitle.textContent = `${t("levelTitle")} ${level.localLevel}`;
+  elements.puzzleDifficulty.textContent = t(`difficulty${level.difficulty}`);
   showScreen("game");
   renderGrid();
   renderWordTargets();
   updateWallet();
-  setMessage("Drag a line through a word.");
+  setMessage(t("dragWord"));
   persistProgress();
   cellButtons[0]?.focus({ preventScroll: true });
 }
@@ -350,7 +482,10 @@ function renderGrid() {
   elements.grid.style.setProperty("--board-size", String(size));
   elements.grid.setAttribute("aria-rowcount", String(size));
   elements.grid.setAttribute("aria-colcount", String(size));
-  elements.grid.setAttribute("aria-label", `${currentLevel.categoryName}, level ${currentLevel.localLevel} letter grid`);
+  elements.grid.setAttribute("aria-label", t("puzzleGridAria", {
+    category: currentLevel.categoryName,
+    level: currentLevel.localLevel
+  }));
   cellButtons = [];
 
   generatedPuzzle.grid.forEach((row, rowIndex) => {
@@ -360,7 +495,11 @@ function renderGrid() {
       cell.type = "button";
       cell.className = "letter-cell";
       cell.setAttribute("role", "gridcell");
-      cell.setAttribute("aria-label", `Row ${rowIndex + 1}, column ${columnIndex + 1}, ${letter}`);
+      cell.setAttribute("aria-label", t("cellAria", {
+        row: rowIndex + 1,
+        column: columnIndex + 1,
+        letter
+      }));
       cell.dataset.cellIndex = String(index);
       cell.tabIndex = index === focusIndex ? 0 : -1;
       cell.textContent = letter;
@@ -408,6 +547,10 @@ function renderWordTargets() {
   updatePuzzleProgress();
 }
 
+function saveFoundWords() {
+  progress.foundByLevel[currentLevel.id] = canonicalizeFoundWords(currentLevel, foundWords);
+}
+
 function updateSelection(path) {
   selectionPath = path || [];
   elements.grid.classList.remove("has-invalid-selection");
@@ -419,30 +562,31 @@ function invalidSelection() {
   tapAnchor = null;
   renderGridStates();
   elements.grid.classList.add("has-invalid-selection");
-  setMessage("Not on this list. Try another line.", "warning");
+  setMessage(t("invalidSelection"), "warning");
   window.setTimeout(() => elements.grid.classList.remove("has-invalid-selection"), 260);
 }
 
 function finishLevel() {
   const firstCompletion = !progress.completedLevelIds.includes(currentLevel.id);
-  progress.foundByLevel[currentLevel.id] = [...foundWords];
+  saveFoundWords();
   progress = completeLevel(currentLevel, progress);
   persistProgress();
   renderHome();
   renderCategories();
   renderLevels();
-  elements.completionTitle.textContent = firstCompletion ? "A lovely find." : "Trail complete.";
+  elements.completionTitle.textContent = firstCompletion ? t("completeTitle") : t("completeReplayTitle");
   elements.completionCopy.textContent = firstCompletion
-    ? "Every word found. There is another little path ahead."
-    : "You found every word on this trail again.";
-  elements.rewardLine.textContent = firstCompletion ? "+1 hint credit" : "No new credit this time";
-  const next = LEVELS.find((level) =>
+    ? t("completeCopy")
+    : t("completeReplayCopy");
+  elements.rewardLine.textContent = firstCompletion ? t("completeReward") : t("noReward");
+  const next = catalog.levels.find((level) =>
     level.categoryId === currentLevel.categoryId &&
     level.localLevel === currentLevel.localLevel + 1
   );
-  elements.nextLevelButton.textContent = next ? "Continue the trail →" : "Choose another path";
+  elements.nextLevelButton.textContent = next ? t("continueTrail") : t("choosePath");
   elements.nextLevelButton.dataset.nextLevelId = next?.id || "";
   if (!elements.completionDialog.open) elements.completionDialog.showModal();
+  playSound("complete");
 }
 
 function acceptPath(path) {
@@ -454,7 +598,7 @@ function acceptPath(path) {
   }
 
   foundWords.add(word);
-  progress.foundByLevel[currentLevel.id] = [...foundWords];
+  saveFoundWords();
   selectionPath = [];
   tapAnchor = null;
   hintedWord = null;
@@ -463,7 +607,11 @@ function acceptPath(path) {
   renderWordTargets();
   updateWallet();
   persistProgress();
-  setMessage(`${word} found. ${currentLevel.words.length - foundWords.size} left.`, "success");
+  setMessage(t("wordFound", {
+    word,
+    left: currentLevel.words.length - foundWords.size
+  }), "success");
+  playSound("found");
 
   if (foundWords.size === currentLevel.words.length) finishLevel();
 }
@@ -472,7 +620,7 @@ function handleTap(index) {
   if (tapAnchor === null) {
     tapAnchor = index;
     updateSelection([index]);
-    setMessage("First letter marked. Tap the last letter.");
+    setMessage(t("firstLetter"));
     return;
   }
   const path = pathBetween(tapAnchor, index, currentLevel.gridSize);
@@ -531,7 +679,7 @@ function onPointerUp(event) {
   }
   tapAnchor = start;
   updateSelection([start]);
-  setMessage("First letter marked. Tap the last letter.");
+  setMessage(t("firstLetter"));
 }
 
 function onGridKeyDown(event) {
@@ -551,7 +699,7 @@ function onGridKeyDown(event) {
     if (event.key === "Escape") {
       tapAnchor = null;
       updateSelection([]);
-      setMessage("Selection cleared.");
+      setMessage(t("selectionCleared"));
     }
     return;
   }
@@ -568,7 +716,7 @@ function onGridKeyDown(event) {
 function useHint() {
   if (!currentLevel || foundWords.size === currentLevel.words.length) return;
   if (progress.hintCredits < 1) {
-    setMessage("No hint credits left. Visit the Pass shop for more.", "warning");
+    setMessage(t("noHints"), "warning");
     return;
   }
   const word = currentLevel.words.find((candidate) => !foundWords.has(candidate));
@@ -580,7 +728,8 @@ function useHint() {
   renderGridStates();
   updateWallet();
   persistProgress();
-  setMessage("A warm trace points to one of the words.", "success");
+  setMessage(t("hintMessage"), "success");
+  playSound("hint");
   clearTimeout(hintTimer);
   hintTimer = window.setTimeout(() => {
     hintedWord = null;
@@ -601,6 +750,8 @@ function setupEvents() {
         showScreen("categories");
       } else if (route === "shop") {
         showScreen("shop");
+      } else if (route === "info") {
+        showScreen("info");
       }
     });
   });
@@ -632,7 +783,7 @@ function setupEvents() {
   elements.grid.addEventListener("keydown", onGridKeyDown);
   elements.hintButton.addEventListener("click", useHint);
   elements.nextLevelButton.addEventListener("click", () => {
-    const level = LEVELS.find((item) => item.id === elements.nextLevelButton.dataset.nextLevelId);
+    const level = catalog.levels.find((item) => item.id === elements.nextLevelButton.dataset.nextLevelId);
     elements.completionDialog.close();
     if (level && isLevelUnlocked(level, progress)) startLevel(level);
     else showLevelsForCurrentCategory();
@@ -650,15 +801,69 @@ function setupEvents() {
   elements.restorePurchasesButton.addEventListener("click", () => {
     void restorePass();
   });
+  elements.languageSetting.addEventListener("change", () => {
+    settings.language = elements.languageSetting.value;
+    catalog = getLocalizedCatalog(settings.language);
+    applyTranslations();
+    elements.gameMessage.textContent = t("dragWord");
+    elements.liveAnnouncement.textContent = "";
+    renderHome();
+    renderCategories();
+    renderStoreState();
+    if (currentScreen === "levels") showLevelsForCurrentCategory();
+    if (currentScreen === "game" && currentLevel) {
+      const localizedLevel = catalog.levels.find((level) => level.id === currentLevel.id);
+      if (localizedLevel) startLevel(localizedLevel);
+    }
+    saveGameSettings();
+  });
+  elements.themeSetting.addEventListener("change", () => {
+    settings.theme = elements.themeSetting.value;
+    elements.app.dataset.theme = settings.theme;
+    saveGameSettings();
+  });
+  elements.soundSetting.addEventListener("change", () => {
+    settings.sound = elements.soundSetting.checked;
+    saveGameSettings();
+    if (settings.sound) playSound("hint");
+  });
+  elements.ambienceSetting.addEventListener("change", () => {
+    void changeAmbience(elements.ambienceSetting.checked);
+  });
   window.addEventListener("pagehide", persistProgress);
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") persistProgress();
+    if (document.visibilityState === "hidden") {
+      persistProgress();
+      void setAmbience(false);
+    } else if (settings.ambience) {
+      void setAmbience(true).catch((error) => {
+        console.error("Ambient sound could not resume.", error);
+        elements.settingsNote.textContent = t("audioError");
+      });
+    }
   });
+}
+
+async function changeAmbience(enabled) {
+  try {
+    await setAmbience(enabled);
+    settings.ambience = enabled;
+    saveGameSettings();
+  } catch (error) {
+    console.error("Ambient sound could not be changed.", error);
+    settings.ambience = false;
+    elements.ambienceSetting.checked = false;
+    const message = !window.AudioContext && !window.webkitAudioContext
+      ? t("audioUnavailable")
+      : t("audioError");
+    saveGameSettings();
+    elements.settingsNote.textContent = message;
+  }
 }
 
 async function buyPass() {
   elements.buyPassButton.disabled = true;
-  elements.storeNote.textContent = "Opening the app store...";
+  elements.storeNote.textContent = t("openingStore");
   try {
     const customerInfo = await purchaseStorePackage(storeState.passPackage);
     if (!hasPassEntitlement(customerInfo)) {
@@ -671,34 +876,38 @@ async function buyPass() {
     renderCategories();
     renderStoreState();
     syncAdBanner();
-    elements.storeNote.textContent = "Your pass is active on this device.";
+    elements.storeNote.textContent = t("passActive");
   } catch (error) {
     console.error("Pass purchase failed.", error);
     renderStoreState();
-    elements.storeNote.textContent = `Purchase not completed: ${error instanceof Error ? error.message : "Store error."}`;
+    elements.storeNote.textContent = t("purchaseFailed", {
+      error: error instanceof Error ? error.message : "Store error."
+    });
   }
 }
 
 async function buyHintPack() {
   elements.buyHintsButton.disabled = true;
-  elements.storeNote.textContent = "Opening the app store...";
+  elements.storeNote.textContent = t("openingStore");
   try {
     await purchaseStorePackage(storeState.hintsPackage);
     progress = grantHintPack(progress);
     persistProgress();
     updateWallet();
     renderStoreState();
-    elements.storeNote.textContent = "20 hint credits were added to your wallet.";
+    elements.storeNote.textContent = t("hintsAdded");
   } catch (error) {
     console.error("Hint pack purchase failed.", error);
     renderStoreState();
-    elements.storeNote.textContent = `Purchase not completed: ${error instanceof Error ? error.message : "Store error."}`;
+    elements.storeNote.textContent = t("purchaseFailed", {
+      error: error instanceof Error ? error.message : "Store error."
+    });
   }
 }
 
 async function restorePass() {
   elements.restorePurchasesButton.disabled = true;
-  elements.storeNote.textContent = "Checking purchases with the app store...";
+  elements.storeNote.textContent = t("checkingPurchases");
   let resultMessage = "";
   try {
     const customerInfo = await restoreStorePurchases();
@@ -709,13 +918,15 @@ async function restorePass() {
       renderHome();
       renderCategories();
       syncAdBanner();
-      resultMessage = "Your pass has been restored.";
+      resultMessage = t("passRestored");
     } else {
-      resultMessage = "No Moss & Letters Pass was found for this store account.";
+      resultMessage = t("noPassFound");
     }
   } catch (error) {
     console.error("Purchase restore failed.", error);
-    resultMessage = `Restore failed: ${error instanceof Error ? error.message : "Store error."}`;
+    resultMessage = t("restoreFailed", {
+      error: error instanceof Error ? error.message : "Store error."
+    });
   }
   renderStoreState();
   elements.storeNote.textContent = resultMessage;
@@ -733,7 +944,7 @@ async function initializeNativeFeatures() {
     renderStoreState();
   } catch (error) {
     console.error("Store initialization failed.", error);
-    storeState = { ready: false, reason: "The store could not be reached. You can keep playing offline." };
+    storeState = { ready: false, reason: t("storeUnavailable") };
     renderStoreState();
   }
 
@@ -748,20 +959,36 @@ async function initializeNativeFeatures() {
 
 function initialize() {
   setupEvents();
+  applyTranslations();
+  elements.settingsNote.textContent = loadedSettings.warning
+    ? t("settingsLoadWarning")
+    : t("settingsSaved");
   renderHome();
   renderCategories();
   renderStoreState();
   updateWallet();
-  if (loaded.warning) announce(loaded.warning);
+  if (loaded.warning) {
+    announce(loaded.warning.includes("Device storage")
+      ? t("storageWarning")
+      : t("progressLoadWarning"));
+  }
   if ("serviceWorker" in navigator && /^https?:$/.test(window.location.protocol)) {
     navigator.serviceWorker.register(new URL("./service-worker.js", window.location.href)).catch(() => {
-      announce("Offline caching could not start. The game still works while this page is open.");
+      announce(t("offlineCacheWarning"));
     });
   }
   if (loaded.warning) {
     window.setTimeout(() => {
-      elements.storeNote.textContent = loaded.warning;
+      elements.storeNote.textContent = loaded.warning.includes("Device storage")
+        ? t("storageWarning")
+        : t("progressLoadWarning");
     }, 0);
+  }
+  if (settings.ambience) {
+    void setAmbience(true).catch((error) => {
+      console.error("Ambient sound could not start.", error);
+      elements.settingsNote.textContent = t("audioError");
+    });
   }
   void initializeNativeFeatures();
 }

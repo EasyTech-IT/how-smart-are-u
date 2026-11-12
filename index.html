@@ -19,8 +19,8 @@
           <span>Moss <b>&amp;</b> Letters</span>
         </a>
         <div class="topbar-stats">
-          <span class="offline-badge"><i aria-hidden="true"></i> Offline ready</span>
-          <span class="hint-wallet" aria-label="Hint credits"><span aria-hidden="true">✦</span> <b id="wallet-count">5</b></span>
+          <span class="offline-badge"><i aria-hidden="true"></i> <span id="offline-label">Offline ready</span></span>
+          <span class="hint-wallet" id="wallet-label" aria-label="Hint credits"><span aria-hidden="true">✦</span> <b id="wallet-count">5</b></span>
         </div>
       </header>
 
@@ -31,9 +31,9 @@
             <span class="art-glow"></span>
           </div>
           <div class="home-copy">
-            <p class="eyebrow">A LITTLE WORD ADVENTURE</p>
-            <h1 id="home-title">Find a word.<br><em>Follow the trail.</em></h1>
-            <p class="home-description">A quiet place for curious minds. No login, no signal, just you and the letters.</p>
+            <p class="eyebrow" id="home-eyebrow">A LITTLE WORD ADVENTURE</p>
+            <h1 id="home-title"><span id="home-title-first">Find a word.</span><br><em id="home-title-second">Follow the trail.</em></h1>
+            <p class="home-description" id="home-description">A quiet place for curious minds. No login, no signal, just you and the letters.</p>
           </div>
           <div class="home-actions">
             <button class="button button-primary button-play" id="play-button" type="button">
@@ -46,9 +46,9 @@
 
         <section class="screen" id="screen-categories" data-screen="categories" aria-labelledby="categories-title" hidden>
           <div class="screen-heading">
-            <p class="eyebrow">CHOOSE YOUR LANDSCAPE</p>
+            <p class="eyebrow" id="categories-eyebrow">CHOOSE YOUR LANDSCAPE</p>
             <h1 id="categories-title">Pick a path</h1>
-            <p>Three landscapes are open. Five more are waiting beyond the pass.</p>
+            <p id="categories-description">Three landscapes are open. Five more are waiting beyond the pass.</p>
           </div>
           <div class="category-grid" id="category-grid" aria-label="Word-search categories"></div>
         </section>
@@ -79,15 +79,17 @@
           <div class="puzzle-progress" role="progressbar" aria-label="Words found" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" id="puzzle-progress">
             <span id="puzzle-progress-fill"></span>
           </div>
+          <div class="puzzle-wordlist">
+            <div class="word-targets" id="word-targets" aria-label="Words to find"></div>
+          </div>
           <div class="puzzle-board-wrap">
             <div class="letter-grid" id="letter-grid" role="grid" aria-label="Word-search letters"></div>
           </div>
           <div class="puzzle-footer">
-            <div class="word-targets" id="word-targets" aria-label="Words to find"></div>
             <div class="puzzle-controls">
               <p class="game-message" id="game-message" role="status" aria-live="polite">Drag a line through a word.</p>
               <button class="button button-hint" id="hint-button" type="button">
-                <span aria-hidden="true">✦</span><span>Hint</span><b id="hint-count">5</b>
+                <span aria-hidden="true">✦</span><span id="hint-label">Hint</span><b id="hint-count">5</b>
               </button>
             </div>
           </div>
@@ -95,16 +97,17 @@
 
         <section class="screen" id="screen-shop" data-screen="shop" aria-labelledby="shop-title" hidden>
           <div class="screen-heading">
-            <p class="eyebrow">KEEP WANDERING</p>
+            <p class="eyebrow" id="shop-eyebrow">KEEP WANDERING</p>
             <h1 id="shop-title">The little shop</h1>
-            <p>One purchase. No renewals. Your progress stays on this device.</p>
+            <p id="shop-description">One purchase. No renewals. Your progress stays on this device.</p>
           </div>
           <article class="shop-card pass-card">
             <div class="shop-mark" aria-hidden="true">✦</div>
             <div class="shop-copy">
-              <p class="eyebrow">ONE-TIME PASS</p>
+              <p class="eyebrow" id="pass-eyebrow">ONE-TIME PASS</p>
               <h2 id="pass-title">Moss &amp; Letters Pass</h2>
-              <p>One purchase for ad-free play, five more landscapes, and 50 bonus hint credits.</p>
+              <p id="pass-description">One purchase for ad-free play, five more landscapes, and 50 bonus hint credits.</p>
+              <p class="pass-benefits" id="pass-benefits">All 8 landscapes · No ads · 50 bonus hints · No subscription</p>
               <button class="button button-primary shop-action" id="buy-pass-button" type="button" disabled>Store setup needed</button>
             </div>
             <span class="price-note" id="pass-price">Price set in the app store</span>
@@ -112,27 +115,77 @@
           <article class="shop-card hint-card">
             <div class="shop-mark hint-mark" aria-hidden="true">✧</div>
             <div class="shop-copy">
-              <p class="eyebrow">HINTS, WHEN YOU NEED THEM</p>
-              <h2>20 hint credits</h2>
-              <p>Need a nudge? A small pack adds 20 hint credits to your wallet.</p>
+              <p class="eyebrow" id="hints-eyebrow">HINTS, WHEN YOU NEED THEM</p>
+              <h2 id="hints-title">20 hint credits</h2>
+              <p id="hints-description">Need a nudge? A small pack adds 20 hint credits to your wallet.</p>
               <button class="button button-secondary shop-action" id="buy-hints-button" type="button" disabled>Store setup needed</button>
             </div>
           </article>
           <button class="text-button" id="restore-purchases-button" type="button" disabled>Restore purchases</button>
           <p class="store-note" id="store-note" role="status">Purchases will be enabled after the store products and keys are configured.</p>
         </section>
+
+        <section class="screen" id="screen-info" data-screen="info" aria-labelledby="info-title" hidden>
+          <div class="screen-heading">
+            <p class="eyebrow" id="info-eyebrow">A CLEAR PATH</p>
+            <h1 id="info-title">About &amp; privacy</h1>
+            <p id="info-description">Your progress stays on this device. These draft notices explain the app and the details still needed before release.</p>
+          </div>
+          <section class="settings-panel" aria-labelledby="settings-title">
+            <h2 id="settings-title">Game settings</h2>
+            <label class="setting-row setting-select" for="language-setting">
+              <span id="language-label">Language</span>
+              <select id="language-setting">
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+                <option value="es">Español</option>
+              </select>
+            </label>
+            <label class="setting-row setting-select" for="theme-setting">
+              <span id="theme-label">Appearance</span>
+              <select id="theme-setting">
+                <option value="dark" id="theme-dark">Forest dark</option>
+                <option value="paper" id="theme-paper">Warm paper</option>
+              </select>
+            </label>
+            <label class="setting-row setting-toggle" for="sound-setting">
+              <span id="sound-label">Interface sounds</span>
+              <input id="sound-setting" type="checkbox" checked>
+            </label>
+            <label class="setting-row setting-toggle" for="ambience-setting">
+              <span id="ambience-label">Ambient sound</span>
+              <input id="ambience-setting" type="checkbox">
+            </label>
+            <p class="settings-note" id="settings-note" role="status">Settings are saved on this device.</p>
+          </section>
+          <div class="info-links" id="legal-links" aria-label="Legal information">
+            <a class="info-link" href="./legal/datenschutz.html">
+              <span><strong id="privacy-title">Privacy notice</strong><small id="privacy-description">Data, ads, purchases and your rights</small></span><span aria-hidden="true">→</span>
+            </a>
+            <a class="info-link" href="./legal/impressum.html">
+              <span><strong id="imprint-title">Imprint</strong><small id="imprint-description">Publisher details and contact</small></span><span aria-hidden="true">→</span>
+            </a>
+            <a class="info-link" href="./legal/nutzungsbedingungen.html">
+              <span><strong id="terms-title">Terms of use</strong><small id="terms-description">Play, purchases and store terms</small></span><span aria-hidden="true">→</span>
+            </a>
+          </div>
+          <p class="info-disclaimer" id="legal-draft">Drafts for the publisher to complete and review. Not ready to publish or submit to an app store.</p>
+        </section>
       </main>
 
       <div class="ad-slot" id="ad-slot" aria-label="Advertisement" hidden>Sponsored</div>
       <nav class="bottom-nav" id="bottom-nav" aria-label="Main navigation">
         <button class="nav-button is-current" type="button" data-route="home" aria-current="page">
-          <span aria-hidden="true">⌂</span><small>Home</small>
+          <span aria-hidden="true">⌂</span><small id="nav-home">Home</small>
         </button>
         <button class="nav-button" type="button" data-route="categories">
-          <span aria-hidden="true">⌘</span><small>Levels</small>
+          <span aria-hidden="true">⌘</span><small id="nav-levels">Levels</small>
         </button>
         <button class="nav-button" type="button" data-route="shop">
-          <span aria-hidden="true">✦</span><small>Pass</small>
+          <span aria-hidden="true">✦</span><small id="nav-pass">Pass</small>
+        </button>
+        <button class="nav-button" type="button" data-route="info">
+          <span aria-hidden="true">ⓘ</span><small id="nav-info">Info</small>
         </button>
       </nav>
       <p class="visually-hidden" id="live-announcement" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -140,7 +193,7 @@
 
     <dialog class="completion-dialog" id="completion-dialog" aria-labelledby="completion-title">
       <div class="completion-spark" aria-hidden="true">✦</div>
-      <p class="eyebrow">TRAIL COMPLETE</p>
+      <p class="eyebrow" id="completion-eyebrow">TRAIL COMPLETE</p>
       <h2 id="completion-title">A lovely find.</h2>
       <p id="completion-copy">You found every word on this trail.</p>
       <p class="reward-line" id="reward-line">+1 hint credit</p>
