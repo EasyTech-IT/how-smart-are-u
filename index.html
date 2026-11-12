@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#193a30">
+    <meta name="description" content="A cozy offline word-search adventure with 200 levels.">
+    <link rel="icon" href="%BASE_URL%favicon.svg" type="image/svg+xml">
+    <link rel="manifest" href="%BASE_URL%manifest.webmanifest">
+    <link rel="stylesheet" href="./replica/design/tokens.css">
+    <link rel="stylesheet" href="./src/game.css">
+    <title>Moss &amp; Letters</title>
+  </head>
+  <body>
+    <div class="app-shell" id="app">
+      <header class="game-topbar">
+        <a class="brand" href="#home" aria-label="Moss & Letters home" data-route="home">
+          <img src="%BASE_URL%assets/app-icon.png" alt="" width="42" height="42">
+          <span>Moss <b>&amp;</b> Letters</span>
+        </a>
+        <div class="topbar-stats">
+          <span class="offline-badge"><i aria-hidden="true"></i> Offline ready</span>
+          <span class="hint-wallet" aria-label="Hint credits"><span aria-hidden="true">✦</span> <b id="wallet-count">5</b></span>
+        </div>
+      </header>
+
+      <main class="game-stage">
+        <section class="screen is-active" id="screen-home" data-screen="home" aria-labelledby="home-title">
+          <div class="home-art" aria-hidden="true">
+            <img src="%BASE_URL%assets/app-icon.png" alt="">
+            <span class="art-glow"></span>
+          </div>
+          <div class="home-copy">
+            <p class="eyebrow">A LITTLE WORD ADVENTURE</p>
+            <h1 id="home-title">Find a word.<br><em>Follow the trail.</em></h1>
+            <p class="home-description">A quiet place for curious minds. No login, no signal, just you and the letters.</p>
+          </div>
+          <div class="home-actions">
+            <button class="button button-primary button-play" id="play-button" type="button">
+              <span id="play-label">Start your first trail</span><span aria-hidden="true">→</span>
+            </button>
+            <p class="home-progress" id="home-progress">200 little discoveries are waiting</p>
+          </div>
+          <div class="home-landscape" aria-hidden="true"><span></span><i></i><b></b></div>
+        </section>
+
+        <section class="screen" id="screen-categories" data-screen="categories" aria-labelledby="categories-title" hidden>
+          <div class="screen-heading">
+            <p class="eyebrow">CHOOSE YOUR LANDSCAPE</p>
+            <h1 id="categories-title">Pick a path</h1>
+            <p>Three landscapes are open. Five more are waiting beyond the pass.</p>
+          </div>
+          <div class="category-grid" id="category-grid" aria-label="Word-search categories"></div>
+        </section>
+
+        <section class="screen" id="screen-levels" data-screen="levels" aria-labelledby="levels-title" hidden>
+          <div class="screen-heading level-heading">
+            <button class="icon-button" id="back-categories" type="button" aria-label="Back to categories">←</button>
+            <div>
+              <p class="eyebrow" id="levels-kicker">THE GROVE</p>
+              <h1 id="levels-title">The Grove</h1>
+            </div>
+            <span class="chapter-count" id="chapter-count">0 / 25</span>
+          </div>
+          <div class="level-path-wrap">
+            <div class="level-path" id="level-path" aria-label="Levels"></div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-game" data-screen="game" aria-labelledby="puzzle-title" hidden>
+          <div class="game-heading">
+            <button class="icon-button" id="back-levels" type="button" aria-label="Back to levels">←</button>
+            <div class="game-heading-copy">
+              <p class="eyebrow" id="puzzle-category">THE GROVE</p>
+              <h1 id="puzzle-title">Level 1</h1>
+            </div>
+            <span class="difficulty-pill" id="puzzle-difficulty">Easy</span>
+          </div>
+          <div class="puzzle-progress" role="progressbar" aria-label="Words found" aria-valuemin="0" aria-valuemax="4" aria-valuenow="0" id="puzzle-progress">
+            <span id="puzzle-progress-fill"></span>
+          </div>
+          <div class="puzzle-board-wrap">
+            <div class="letter-grid" id="letter-grid" role="grid" aria-label="Word-search letters"></div>
+          </div>
+          <div class="puzzle-footer">
+            <div class="word-targets" id="word-targets" aria-label="Words to find"></div>
+            <div class="puzzle-controls">
+              <p class="game-message" id="game-message" role="status" aria-live="polite">Drag a line through a word.</p>
+              <button class="button button-hint" id="hint-button" type="button">
+                <span aria-hidden="true">✦</span><span>Hint</span><b id="hint-count">5</b>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen" id="screen-shop" data-screen="shop" aria-labelledby="shop-title" hidden>
+          <div class="screen-heading">
+            <p class="eyebrow">KEEP WANDERING</p>
+            <h1 id="shop-title">The little shop</h1>
+            <p>One purchase. No renewals. Your progress stays on this device.</p>
+          </div>
+          <article class="shop-card pass-card">
+            <div class="shop-mark" aria-hidden="true">✦</div>
+            <div class="shop-copy">
+              <p class="eyebrow">ONE-TIME PASS</p>
+              <h2 id="pass-title">Moss &amp; Letters Pass</h2>
+              <p>One purchase for ad-free play, five more landscapes, and 50 bonus hint credits.</p>
+              <button class="button button-primary shop-action" id="buy-pass-button" type="button" disabled>Store setup needed</button>
+            </div>
+            <span class="price-note" id="pass-price">Price set in the app store</span>
+          </article>
+          <article class="shop-card hint-card">
+            <div class="shop-mark hint-mark" aria-hidden="true">✧</div>
+            <div class="shop-copy">
+              <p class="eyebrow">HINTS, WHEN YOU NEED THEM</p>
+              <h2>20 hint credits</h2>
+              <p>Need a nudge? A small pack adds 20 hint credits to your wallet.</p>
+              <button class="button button-secondary shop-action" id="buy-hints-button" type="button" disabled>Store setup needed</button>
+            </div>
+          </article>
+          <button class="text-button" id="restore-purchases-button" type="button" disabled>Restore purchases</button>
+          <p class="store-note" id="store-note" role="status">Purchases will be enabled after the store products and keys are configured.</p>
+        </section>
+      </main>
+
+      <div class="ad-slot" id="ad-slot" aria-label="Advertisement" hidden>Sponsored</div>
+      <nav class="bottom-nav" id="bottom-nav" aria-label="Main navigation">
+        <button class="nav-button is-current" type="button" data-route="home" aria-current="page">
+          <span aria-hidden="true">⌂</span><small>Home</small>
+        </button>
+        <button class="nav-button" type="button" data-route="categories">
+          <span aria-hidden="true">⌘</span><small>Levels</small>
+        </button>
+        <button class="nav-button" type="button" data-route="shop">
+          <span aria-hidden="true">✦</span><small>Pass</small>
+        </button>
+      </nav>
+      <p class="visually-hidden" id="live-announcement" role="status" aria-live="polite" aria-atomic="true"></p>
+    </div>
+
+    <dialog class="completion-dialog" id="completion-dialog" aria-labelledby="completion-title">
+      <div class="completion-spark" aria-hidden="true">✦</div>
+      <p class="eyebrow">TRAIL COMPLETE</p>
+      <h2 id="completion-title">A lovely find.</h2>
+      <p id="completion-copy">You found every word on this trail.</p>
+      <p class="reward-line" id="reward-line">+1 hint credit</p>
+      <button class="button button-primary" id="next-level-button" type="button">Continue the trail →</button>
+      <button class="text-button" id="return-map-button" type="button">Back to the map</button>
+    </dialog>
+
+    <script type="module" src="./src/game-app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "appId": "com.easytechit.mossletters",
+  "appName": "Moss & Letters",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}

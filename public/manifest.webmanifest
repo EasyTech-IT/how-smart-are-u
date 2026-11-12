@@ -1,0 +1,18 @@
+{
+  "name": "Moss & Letters",
+  "short_name": "Moss & Letters",
+  "description": "A cozy offline word-search adventure with 200 levels.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#193a30",
+  "theme_color": "#193a30",
+  "icons": [
+    {
+      "src": "./assets/app-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

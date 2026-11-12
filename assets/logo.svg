@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 132" fill="none">
+  <rect x="4" y="12" width="108" height="108" rx="28" fill="#193A30"/>
+  <path d="M79 35c14 5 19 14 17 26-2 10-10 15-24 18-14 3-20 8-20 16 0 8 7 12 20 12 9 0 17-2 24-7" stroke="#C9754D" stroke-linecap="round" stroke-width="9"/>
+  <rect x="20" y="27" width="42" height="42" rx="10" fill="#F2E9D1"/>
+  <rect x="48" y="67" width="42" height="42" rx="10" fill="#F2E9D1"/>
+  <text x="41" y="56" fill="#193A30" font-family="Georgia,serif" font-size="26" font-weight="700" text-anchor="middle">M</text>
+  <text x="69" y="96" fill="#193A30" font-family="Georgia,serif" font-size="26" font-weight="700" text-anchor="middle">L</text>
+  <path d="M92 35c-3-15 2-23 16-27 2 15-3 23-16 27Z" fill="#B5C879"/>
+  <text x="133" y="67" fill="#F2E9D1" font-family="Georgia,serif" font-size="43" font-weight="700" letter-spacing="-2">Moss &amp;</text>
+  <text x="133" y="111" fill="#D78254" font-family="Georgia,serif" font-size="43" font-weight="700" letter-spacing="-2">Letters</text>
+</svg>
