@@ -82,7 +82,8 @@ There is deliberately no account, user table, custom API, or cloud save.
 ## Feature matrix
 
 See `features.csv`. Must-have rows cover the core loop, offline progress,
-accessibility, 200-level progression, and original content. Billing and ads
+accessibility, 250-level progression across ten themed worlds, and original
+content. Billing and ads
 remain configuration-gated.
 
 ## Out of scope
@@ -97,6 +98,6 @@ remain configuration-gated.
 ## Size and risks
 
 Six screens, four user flows, one local progress record, and two native
-platforms. Size: M. Hard parts: keeping the 200 generated puzzles solvable,
+platforms. Size: M. Hard parts: keeping the 250 generated puzzles solvable,
 maintaining offline progress while validating lifetime purchases, and
 consent-safe native ads that never interrupt a puzzle.

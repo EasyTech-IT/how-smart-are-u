@@ -13,12 +13,14 @@ test("settings accept only supported languages, themes and boolean toggles", () 
     language: "es",
     theme: "paper",
     sound: false,
+    haptics: false,
     ambience: true,
     unexpected: "ignored"
   }), {
     language: "es",
     theme: "paper",
     sound: false,
+    haptics: false,
     ambience: true
   });
   assert.deepEqual(normalizeSettings({
@@ -45,7 +47,7 @@ test("settings load and save independently of game progress", () => {
   saveSettings(storage, { language: "de", theme: "paper", sound: true, ambience: false });
   assert.equal(savedKey, SETTINGS_KEY);
   assert.deepEqual(loadSettings(storage), {
-    settings: { language: "de", theme: "paper", sound: true, ambience: false },
+    settings: { language: "de", theme: "paper", sound: true, haptics: true, ambience: false },
     warning: ""
   });
 });

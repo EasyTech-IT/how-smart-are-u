@@ -19,11 +19,13 @@
 ## Local model and invariants
 
 `src/progress.js` owns the persisted shape and validates IDs and values when
-loading. Each category has 25 levels; levels unlock sequentially. First
+loading. Each of the ten worlds has 25 levels; levels unlock sequentially. The
+three free worlds are fully open, and seven Pass worlds each include five
+preview levels except Spicy Secrets, which includes three. First
 completion grants one hint credit, replay grants none, the pass grants 50
 bonus credits once, and a hint pack grants 20 credits after a successful
-store transaction. The pass permanently unlocks five categories and disables
-ads.
+store transaction. The pass permanently unlocks the seven premium worlds and
+disables ads. Spicy Secrets also requires local 18+ self-confirmation.
 
 There is no SQL schema or REST API by design. Store purchases are verified by
 RevenueCat; local progress can continue offline after a purchase. Store restore
@@ -43,7 +45,7 @@ requires an internet connection and the same platform store account.
 
 ## Build order
 
-1. [x] Generate the offline-first game, local progress, and 200-level catalog.
+1. [x] Generate the offline-first game, local progress, and 250-level catalog.
 2. [x] Add static Vite build, PWA shell, Capacitor identifiers, and native
    billing/ad adapters with explicit configuration gates.
 3. [x] Test deterministic puzzle generation, progression, pass rewards,

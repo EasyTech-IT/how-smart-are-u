@@ -8,6 +8,7 @@ export function freshSettings() {
     language: "en",
     theme: "dark",
     sound: true,
+    haptics: true,
     ambience: false
   };
 }
@@ -20,6 +21,7 @@ export function normalizeSettings(value) {
     language: languages.has(value.language) ? value.language : fresh.language,
     theme: themes.has(value.theme) ? value.theme : fresh.theme,
     sound: typeof value.sound === "boolean" ? value.sound : fresh.sound,
+    haptics: typeof value.haptics === "boolean" ? value.haptics : fresh.haptics,
     ambience: typeof value.ambience === "boolean" ? value.ambience : fresh.ambience
   };
 }

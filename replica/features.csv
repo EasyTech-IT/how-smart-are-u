@@ -1,13 +1,15 @@
 feature,area,priority,original,clone,notes
 Start from an app-like home screen,navigation,must,yes,yes,Fixed-height screen with no vertical page scrolling
-Choose a landscape,content,must,yes,yes,Three free and five pass-locked original categories
-Play 200 progressive levels,progress,must,yes,yes,25 levels per category with increasing grid sizes and word counts
+Choose a landscape,content,must,yes,yes,Three fully free worlds and seven Pass worlds with previews
+Play 250 progressive levels,progress,must,yes,yes,25 levels per world with increasing grid sizes and word counts
 Select words by touch,gameplay,must,yes,yes,Drag or tap endpoints; keyboard arrows remain supported
 Show found words and completion,gameplay,must,yes,yes,Completion dialog and first-completion hint reward
 Play offline without an account,offline,must,yes,yes,Deterministic puzzles and progress are stored on-device
 Use hint credits,gameplay,must,yes,yes,Five starting credits; first level completion adds one
 Buy a permanent ad-free pass,store,should,no,partial,RevenueCat adapter is implemented; store keys and non-consumable products are not configured
-Unlock five premium landscapes,store,should,no,partial,Locked category access is granted by the lifetime pass entitlement
+Unlock seven premium worlds,store,should,no,partial,Preview levels are free; the lifetime pass unlocks the rest
+Choose animated themes and audio,settings,should,yes,yes,Dark and warm-paper GIF backgrounds with original Web Audio effects and ambient music
+Gate Spicy Secrets by age,content,should,yes,yes,Local 18+ self-confirmation only; not verified age checking
 Buy a 20-credit hint pack,store,could,no,partial,Consumable product adapter is implemented; store product is not configured
 Show consent-aware banner ads,ads,should,no,partial,AdMob and UMP adapter is gated by platform IDs and published consent forms; no ads during puzzles
 Restore lifetime pass,store,should,no,partial,Native RevenueCat restore flow is implemented; sandbox validation remains

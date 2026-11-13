@@ -6,59 +6,84 @@ export const LEVELS_PER_CATEGORY = 25;
 const categoryDefinitions = [
   {
     id: "grove",
-    name: "The Grove",
-    subtitle: "Moss, leaves and forest paths",
+    name: "Trend Radar",
+    subtitle: "Slang, memes and internet moments",
     free: true,
-    words: ["MOSS", "FERN", "PINE", "OAK", "BIRCH", "MAPLE", "CEDAR", "WILLOW", "ROOT", "LEAF", "BARK", "ACORN", "SEED", "SHADE", "GROVE", "MUSHROOM", "DEER", "OWL", "FOX", "BADGER", "ROBIN", "BRANCH", "FOREST", "CANOPY", "THICKET", "CLOVER", "IVY", "BLOSSOM", "NEST", "TRAIL"]
+    previewLevels: 25,
+    words: ["RAGEBAIT", "PEAK", "CRASHOUT", "DIGGA", "AURA", "MEME", "VIRAL", "VIBE", "FLEX", "SUS", "GLOWUP", "FYP", "SLAY", "RIZZ", "CAP", "HYPE", "MOOD", "DRAMA", "BRAINROT", "CHAT", "STREAM", "TREND", "DUET", "TIKTOK", "POV", "EMOJI", "GOATED", "LORE", "PLOT", "AESTHETIC"]
   },
   {
     id: "shore",
-    name: "Tidepool Bay",
-    subtitle: "Shells, salt air and sea life",
+    name: "Pop Culture",
+    subtitle: "Stars, series and stories everyone knows",
     free: true,
-    words: ["SHELL", "TIDE", "WAVE", "SAND", "CORAL", "REEF", "KELP", "PEARL", "CRAB", "SEAL", "OTTER", "DOLPHIN", "HARBOR", "ANCHOR", "OCEAN", "COAST", "SHORE", "FISH", "STARFISH", "LAGOON", "DRIFT", "SURF", "BEACH", "BUOY", "SAIL", "CLAM", "OYSTER", "PUFFIN", "CURRENT", "SEAGLASS"]
+    previewLevels: 25,
+    words: ["TAYLOR", "WEDNESDAY", "MARVEL", "POTTER", "NETFLIX", "SWIFT", "BARBIE", "MARIO", "MANGA", "ANIME", "OSCAR", "HOLLYWOOD", "SPOILER", "FANDOM", "COMIC", "HERO", "VILLAIN", "SERIES", "CINEMA", "DIVA", "ACTOR", "STREAM", "DRAMA", "REBOOT", "SEASON", "SCENE", "CAST", "AWARD", "COSPLAY", "PIXAR"]
   },
   {
     id: "hearth",
-    name: "The Hearth",
-    subtitle: "Comforts from the kitchen",
+    name: "World & Knowledge",
+    subtitle: "Places, nature and surprising facts",
     free: true,
-    words: ["BREAD", "HONEY", "APPLE", "PEAR", "SOUP", "THYME", "BASIL", "CINNAMON", "GINGER", "LEMON", "OLIVE", "PASTA", "OAT", "COCOA", "BERRY", "PUMPKIN", "VANILLA", "TEAPOT", "KETTLE", "PLATE", "SPOON", "BUTTER", "CHEESE", "PICKLE", "MUFFIN", "PEPPER", "ROSEMARY", "APRICOT", "WALNUT", "PANTRY"]
+    previewLevels: 25,
+    words: ["JAPAN", "BRAZIL", "TOKYO", "EIFFEL", "AMAZON", "SAHARA", "EVEREST", "NILE", "PANDA", "TIGER", "CORAL", "VOLCANO", "ORBIT", "PLANET", "ISLAND", "DESERT", "JUNGLE", "IGLOO", "SAFARI", "MONSOON", "MAPLE", "REEF", "SAIL", "DELTA", "GLACIER", "LAGOON", "BERLIN", "CAPITAL", "OASIS", "ATLAS"]
   },
   {
     id: "wilds",
-    name: "Wild Country",
-    subtitle: "Tracks, feathers and wild creatures",
+    name: "Brand Battle",
+    subtitle: "Famous names from shops and screens",
     free: false,
-    words: ["BADGER", "BISON", "COYOTE", "EAGLE", "FALCON", "HARE", "LYNX", "MOOSE", "OTTER", "RAVEN", "SALMON", "WOLF", "BEAVER", "BOBCAT", "BUFFALO", "COUGAR", "HERON", "MARMOT", "OSPREY", "PANTHER", "PRAIRIE", "RANGER", "TURTLE", "VULTURE", "WILDCAT", "ANTELOPE", "CARIBOU", "PORCUPINE", "WOLVERINE", "WOODPECKER"]
+    previewLevels: 5,
+    words: ["NIKE", "ADIDAS", "APPLE", "LEGO", "GUCCI", "PUMA", "SONY", "IKEA", "TESLA", "ZARA", "SAMSUNG", "AMAZON", "GOOGLE", "DISNEY", "NINTENDO", "SPOTIFY", "NETFLIX", "COCACOLA", "CHANEL", "ROLEX", "PEPSI", "FERRARI", "VISA", "LACOSTE", "TARGET", "PRADA", "SEPHORA", "EBAY", "DELL", "SONOS"]
   },
   {
     id: "starlight",
-    name: "Starlight",
-    subtitle: "Planets, constellations and night skies",
+    name: "Fashion Icons",
+    subtitle: "Labels, sneakers and runway style",
     free: false,
-    words: ["MOON", "COMET", "ORBIT", "NOVA", "NEBULA", "PLANET", "SATURN", "JUPITER", "VENUS", "MARS", "GALAXY", "ECLIPSE", "METEOR", "COSMOS", "STARLIGHT", "TELESCOPE", "ASTEROID", "AURORA", "SOLAR", "LUNAR", "QUASAR", "ROCKET", "CRATER", "EQUINOX", "MILKYWAY", "SUPERNOVA", "CONSTELLATION", "LIGHTYEAR", "GRAVITY", "ZENITH"]
+    previewLevels: 5,
+    words: ["PRADA", "DIOR", "LOUISVUITTON", "BALENCIAGA", "NEWBALANCE", "SNEAKER", "RUNWAY", "COUTURE", "DENIM", "SILK", "COTTON", "VOGUE", "STYLE", "OUTFIT", "DESIGNER", "FASHION", "WARDROBE", "STILETTO", "STREETWEAR", "ELEGANCE", "MODEL", "LABEL", "CHIC", "DRESS", "BOOT", "HEEL", "BAG", "JEWEL", "TRENCH", "CATWALK"]
   },
   {
     id: "market",
-    name: "Lantern Market",
-    subtitle: "Colors and flavors from faraway stalls",
+    name: "Movie Mania",
+    subtitle: "Big-screen worlds, heroes and surprises",
     free: false,
-    words: ["SAFFRON", "CLOVE", "MANGO", "PAPAYA", "COCONUT", "CARDAMOM", "JASMINE", "CUMIN", "FIG", "DATE", "MELON", "CHILI", "TURMERIC", "LYCHEE", "TAMARIND", "POMELO", "CITRON", "NUTMEG", "MARIGOLD", "OLIVE", "ANISE", "GUAVA", "PERSIMMON", "CASSAVA", "POMEGRANATE", "STARANISE", "LEMONGRASS", "PINEAPPLE", "DRAGONFRUIT", "MARKET"]
+    previewLevels: 5,
+    words: ["TITANIC", "AVATAR", "STRANGERTHING", "SHREK", "STARWARS", "PIXAR", "OSCAR", "GOLLUM", "HOGWARTS", "JURASSIC", "MATRIX", "TOYSTORY", "FROZEN", "MOANA", "BATMAN", "JOKER", "DUNE", "WIZARD", "HERO", "SCENE", "SCRIPT", "PREMIERE", "REEL", "CAMERA", "STUNT", "DIRECTOR", "ACTOR", "ANIMATION", "SEQUEL", "BLOCKBUSTER"]
   },
   {
     id: "highlands",
-    name: "Cloud Highlands",
-    subtitle: "Ridges, rivers and mountain air",
+    name: "Party Mode",
+    subtitle: "Festivals, dancing and nights with friends",
     free: false,
-    words: ["SUMMIT", "RIDGE", "VALLEY", "GLACIER", "CANYON", "RIVER", "STREAM", "WATERFALL", "MEADOW", "ALPINE", "PONDEROSA", "SLOPE", "PEAK", "CLIFF", "CIRQUE", "BOULDER", "TUNDRA", "FOOTHILL", "RAPIDS", "PASS", "CLOUD", "ECHO", "SNOWCAP", "RAVINE", "PLATEAU", "WILDFLOWER", "MOUNTAIN", "HORIZON", "CASCADES", "OVERLOOK"]
+    previewLevels: 5,
+    words: ["DJ", "FESTIVAL", "KARAOKE", "DANCEFLOOR", "MOCKTAIL", "AFTERPARTY", "DANCE", "FRIENDS", "CONFETTI", "BALLOON", "MUSIC", "LIGHTS", "PARTY", "TOAST", "PICNIC", "FIREWORKS", "GLOWSTICK", "LAUGH", "BEATS", "CHEER", "CLUB", "BRUNCH", "COSTUME", "PARADE", "CELEBRATE", "SUNSET", "MIDNIGHT", "WEEKEND", "RHYTHM", "JOY"]
   },
   {
     id: "wonder",
-    name: "Wonderworks",
-    subtitle: "Little curiosities and clever discoveries",
+    name: "Spicy Secrets",
+    subtitle: "Flirting, dates and butterflies · 18+",
     free: false,
-    words: ["RIDDLE", "PUZZLE", "SECRET", "MIRROR", "POCKET", "COMPASS", "POSTCARD", "JOURNAL", "TREASURE", "KEYHOLE", "CURIOSITY", "DAYDREAM", "MAGIC", "WHISPER", "FOOTPRINT", "HIDDEN", "PATTERN", "MYSTERY", "LANTERN", "TINKER", "GIGGLE", "INVENT", "WONDER", "DISCOVER", "IMAGINE", "ODDITY", "TALISMAN", "WHIMSY", "LOCKET", "DAYLIGHT"]
+    previewLevels: 3,
+    ageRestricted: true,
+    words: ["CRUSH", "KISS", "FLIRT", "CHEMISTRY", "DATENIGHT", "SPARK", "ROMANCE", "HEART", "BLUSH", "DATE", "CHARM", "SMILE", "COUPLE", "CUDDLE", "SWEET", "CANDLE", "CLOSER", "SECRET", "LOVER", "ATTRACTION", "ADMIRE", "AFFECTION", "PASSION", "TRUST", "BOND", "TEXT", "CHEEKY", "TINGLE", "WINK", "DESIRE"]
+  },
+  {
+    id: "brain-quest",
+    name: "Brain Quest",
+    subtitle: "Logic, language and challenging ideas",
+    free: false,
+    previewLevels: 5,
+    words: ["PARADOX", "METAMORPHOSIS", "HYPOTHESIS", "PHILOSOPHY", "LOGIC", "THEOREM", "EVIDENCE", "FALLACY", "ANALOGY", "DILEMMA", "CONUNDRUM", "INFERENCE", "REASON", "PATTERN", "PUZZLE", "THEORY", "AXIOM", "ETHICS", "QUANTUM", "GRAVITY", "ENIGMA", "SYLLOGISM", "PARSIMONY", "COGNITION", "SYNTHESIS", "RHETORIC", "EMPIRICAL", "DEDUCTION", "INDUCTION", "SEMANTIC"]
+  },
+  {
+    id: "music-stars",
+    name: "Music & Stars",
+    subtitle: "Artists, sounds and stages",
+    free: false,
+    previewLevels: 5,
+    words: ["DRAKE", "BILLIE", "APACHE", "RIHANNA", "BEYONCE", "TAYLOR", "SWIFT", "ARTIST", "SINGER", "RAPPER", "BAND", "ALBUM", "LYRIC", "RHYTHM", "MELODY", "CHORUS", "VINYL", "GUITAR", "DRUMMER", "PIANO", "KEYS", "POP", "JAZZ", "INDIE", "ROCK", "TOUR", "STAGE", "HARMONY", "RECORD", "SYNTH"]
   }
 ];
 
@@ -69,11 +94,11 @@ export const CATEGORIES = categoryDefinitions.map(({ words, ...category }) => ({
 }));
 
 function gridSizeForLevel(levelNumber) {
-  return Math.min(13, 8 + Math.floor((levelNumber - 1) / 30));
+  return Math.min(13, 8 + Math.floor((levelNumber - 1) / 4));
 }
 
 function wordCountForLevel(levelNumber) {
-  return Math.min(8, 4 + Math.floor((levelNumber - 1) / 28));
+  return Math.min(8, 4 + Math.floor((levelNumber - 1) / 5));
 }
 
 function wordsForLevel(category, localLevel, size, count) {
@@ -90,10 +115,10 @@ function wordsForLevel(category, localLevel, size, count) {
 }
 
 function difficultyForLevel(levelNumber) {
-  if (levelNumber <= 25) return "Easy";
-  if (levelNumber <= 75) return "Gentle";
-  if (levelNumber <= 125) return "Steady";
-  if (levelNumber <= 175) return "Tricky";
+  if (levelNumber <= 5) return "Easy";
+  if (levelNumber <= 10) return "Gentle";
+  if (levelNumber <= 15) return "Steady";
+  if (levelNumber <= 20) return "Tricky";
   return "Hard";
 }
 
@@ -101,7 +126,7 @@ export const LEVELS = CATEGORIES.flatMap((category, categoryIndex) =>
   Array.from({ length: LEVELS_PER_CATEGORY }, (_, index) => {
     const localLevel = index + 1;
     const number = categoryIndex * LEVELS_PER_CATEGORY + localLevel;
-    const gridSize = gridSizeForLevel(number);
+    const gridSize = gridSizeForLevel(localLevel);
     return {
       id: `${category.id}-${String(localLevel).padStart(2, "0")}`,
       categoryId: category.id,
@@ -110,8 +135,8 @@ export const LEVELS = CATEGORIES.flatMap((category, categoryIndex) =>
       localLevel,
       number,
       gridSize,
-      difficulty: difficultyForLevel(number),
-      words: wordsForLevel(category, localLevel, gridSize, wordCountForLevel(number))
+      difficulty: difficultyForLevel(localLevel),
+      words: wordsForLevel(category, localLevel, gridSize, wordCountForLevel(localLevel))
     };
   })
 );
@@ -130,13 +155,15 @@ export function getLocalizedCatalog(language) {
     const categoryIndex = CATEGORIES.findIndex((category) => category.id === level.categoryId);
     const sourceWords = CATEGORIES[categoryIndex].words;
     const localizedCategory = categories[categoryIndex];
+    const words = level.words.map((word) =>
+      localizedCategory.words[sourceWords.indexOf(word)]
+    );
     return {
       ...level,
       categoryName: localizedCategory.name,
       canonicalWords: level.words,
-      words: level.words.map((word) =>
-        localizedCategory.words[sourceWords.indexOf(word)]
-      )
+      gridSize: Math.max(level.gridSize, ...words.map((word) => word.length)),
+      words
     };
   });
   return { categories, levels };
@@ -180,12 +207,12 @@ function seededRandom(seed) {
 }
 
 function directionsForLevel(levelNumber) {
-  if (levelNumber < 26) {
+  if (levelNumber <= 5) {
     return DIRECTIONS.filter(([row, column]) =>
       row >= 0 && column >= 0 && (row === 0 || column === 0)
     );
   }
-  if (levelNumber < 76) return DIRECTIONS.filter(([row, column]) => row >= 0);
+  if (levelNumber <= 12) return DIRECTIONS.filter(([row, column]) => row >= 0);
   return DIRECTIONS;
 }
 
@@ -202,7 +229,7 @@ export function buildPuzzle(puzzle, size = puzzle?.gridSize || GRID_SIZE) {
   const placements = {};
   const words = [...new Set(puzzle.words.map((word) => word.toUpperCase()))]
     .sort((left, right) => right.length - left.length);
-  const directions = directionsForLevel(puzzle.number || 76);
+  const directions = directionsForLevel(puzzle.localLevel || puzzle.number || 76);
 
   for (const word of words) {
     if (!/^[A-Z]+$/.test(word) || word.length > size) {

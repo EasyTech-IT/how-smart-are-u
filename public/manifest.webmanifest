@@ -1,7 +1,7 @@
 {
   "name": "Moss & Letters",
   "short_name": "Moss & Letters",
-  "description": "A cozy offline word-search adventure with 200 levels.",
+  "description": "A cozy offline word-search adventure with 250 levels across ten worlds.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -42,7 +42,6 @@ strong { color: var(--ink); }
 }
 .document { margin-top: 24px; padding: 20px; border: 1px solid var(--line); border-radius: 20px; background: var(--panel); }
 .document ul { padding-left: 22px; }
-.placeholder { color: var(--warning); font-weight: 700; }
 footer { margin-top: 32px; border-top: 1px solid var(--line); padding-top: 16px; }
 
 @media (prefers-reduced-motion: reduce) {

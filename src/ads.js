@@ -5,6 +5,7 @@ import {
   BannerAdPosition,
   BannerAdSize
 } from "@capacitor-community/admob";
+import { hasEarnedAdReward } from "./ad-access.js";
 
 let initialized = false;
 
@@ -12,26 +13,33 @@ function configurationForPlatform() {
   if (Capacitor.getPlatform() === "android") {
     return {
       appId: import.meta.env.VITE_ADMOB_ANDROID_APP_ID,
-      bannerId: import.meta.env.VITE_ADMOB_ANDROID_BANNER_ID
+      bannerId: import.meta.env.VITE_ADMOB_ANDROID_BANNER_ID,
+      rewardedId: import.meta.env.VITE_ADMOB_ANDROID_REWARDED_ID
     };
   }
   if (Capacitor.getPlatform() === "ios") {
     return {
       appId: import.meta.env.VITE_ADMOB_IOS_APP_ID,
-      bannerId: import.meta.env.VITE_ADMOB_IOS_BANNER_ID
+      bannerId: import.meta.env.VITE_ADMOB_IOS_BANNER_ID,
+      rewardedId: import.meta.env.VITE_ADMOB_IOS_REWARDED_ID
     };
   }
-  return { appId: "", bannerId: "" };
+  return { appId: "", bannerId: "", rewardedId: "" };
 }
 
 export async function initializeAds() {
   if (!Capacitor.isNativePlatform()) {
-    return { ready: false, reason: "Ads are available only in the native app." };
+    return { ready: false, bannerId: "", rewardedId: "", reason: "Ads are available only in the native app." };
   }
 
   const configuration = configurationForPlatform();
-  if (!configuration.appId || !configuration.bannerId) {
-    return { ready: false, reason: "AdMob app and banner IDs are not configured." };
+  if (!configuration.appId || (!configuration.bannerId && !configuration.rewardedId)) {
+    return {
+      ready: false,
+      bannerId: "",
+      rewardedId: "",
+      reason: "AdMob app and banner or rewarded-ad IDs are not configured."
+    };
   }
 
   let consent = await AdMob.requestConsentInfo();
@@ -39,16 +47,25 @@ export async function initializeAds() {
     consent = await AdMob.showConsentForm();
   }
   if (!consent.canRequestAds) {
-    return { ready: false, reason: "Ads are paused until the required consent is available." };
+    return {
+      ready: false,
+      bannerId: "",
+      rewardedId: "",
+      reason: "Ads are paused until the required consent is available."
+    };
   }
 
   await AdMob.initialize();
   initialized = true;
-  return { ready: true, bannerId: configuration.bannerId };
+  return {
+    ready: true,
+    bannerId: configuration.bannerId,
+    rewardedId: configuration.rewardedId
+  };
 }
 
 export async function showAdBanner(bannerId, margin) {
-  if (!initialized) return false;
+  if (!initialized || !bannerId) return false;
   await AdMob.showBanner({
     adId: bannerId,
     adSize: BannerAdSize.ADAPTIVE_BANNER,
@@ -60,4 +77,13 @@ export async function showAdBanner(bannerId, margin) {
 
 export async function hideAdBanner() {
   if (initialized) await AdMob.hideBanner();
+}
+
+export async function showRewardedHintAd(rewardedId) {
+  if (!initialized) throw new Error("AdMob is not ready.");
+  if (!rewardedId) throw new Error("A rewarded-ad unit ID is not configured.");
+
+  await AdMob.prepareRewardVideoAd({ adId: rewardedId });
+  const reward = await AdMob.showRewardVideoAd({ adId: rewardedId });
+  return hasEarnedAdReward(reward);
 }

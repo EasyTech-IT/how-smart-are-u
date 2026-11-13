@@ -13,10 +13,15 @@ import {
   pathBetween
 } from "../src/game-logic.js";
 
-test("the catalog contains 200 stable, playable levels across eight categories", () => {
-  assert.equal(LEVELS.length, 200);
-  assert.equal(CATEGORIES.length, 8);
-  assert.ok(CATEGORIES.filter((category) => category.free).length >= 3);
+test("the catalog contains 250 stable, playable levels across ten worlds", () => {
+  assert.equal(LEVELS.length, 250);
+  assert.equal(CATEGORIES.length, 10);
+  assert.equal(CATEGORIES.filter((category) => category.free).length, 3);
+  assert.equal(CATEGORIES.filter((category) => !category.free).length, 7);
+  assert.equal(CATEGORIES.filter((category) => category.free)
+    .reduce((sum, category) => sum + category.previewLevels, 0), 75);
+  assert.equal(CATEGORIES.filter((category) => !category.free)
+    .reduce((sum, category) => sum + category.previewLevels, 0), 33);
   assert.equal(new Set(LEVELS.map((level) => level.id)).size, LEVELS.length);
 
   for (const category of CATEGORIES) {
@@ -34,9 +39,12 @@ test("the catalog contains 200 stable, playable levels across eight categories",
 });
 
 test("level size and word count never decrease as difficulty advances", () => {
-  for (let index = 1; index < LEVELS.length; index += 1) {
-    assert.ok(LEVELS[index].gridSize >= LEVELS[index - 1].gridSize);
-    assert.ok(LEVELS[index].words.length >= LEVELS[index - 1].words.length);
+  for (const category of CATEGORIES) {
+    const levels = LEVELS.filter((level) => level.categoryId === category.id);
+    for (let index = 1; index < levels.length; index += 1) {
+      assert.ok(levels[index].gridSize >= levels[index - 1].gridSize);
+      assert.ok(levels[index].words.length >= levels[index - 1].words.length);
+    }
   }
   assert.equal(LEVELS[0].gridSize, 8);
   assert.equal(LEVELS.at(-1).gridSize, 13);
@@ -76,7 +84,7 @@ test("partial found-word progress survives switching between catalog languages",
 });
 
 test("early levels use only horizontal and vertical placements", () => {
-  for (const level of LEVELS.slice(0, 25)) {
+  for (const level of LEVELS.filter((item) => item.localLevel <= 5)) {
     const puzzle = buildPuzzle(level);
     for (const path of Object.values(puzzle.placements)) {
       const first = path[0];

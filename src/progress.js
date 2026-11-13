@@ -1,18 +1,21 @@
 import { CATEGORIES, LEVELS } from "./game-logic.js";
 
 export const PROGRESS_KEY = "moss-and-letters.progress.v1";
+const CATALOG_VERSION = 2;
 const levelIds = new Set(LEVELS.map((level) => level.id));
 const categoryIds = new Set(CATEGORIES.map((category) => category.id));
 
 export function freshProgress() {
   return {
+    catalogVersion: CATALOG_VERSION,
     activeCategoryId: CATEGORIES[0].id,
     activeLevelId: LEVELS[0].id,
     completedLevelIds: [],
     foundByLevel: {},
     hintCredits: 5,
     hasPass: false,
-    passHintsGranted: false
+    passHintsGranted: false,
+    ageConfirmed: false
   };
 }
 
@@ -29,7 +32,8 @@ export function normalizeProgress(value) {
     ? Math.max(0, Math.min(9999, value.hintCredits))
     : fresh.hintCredits;
   const foundByLevel = {};
-  if (value.foundByLevel && typeof value.foundByLevel === "object" &&
+  if (value.catalogVersion === CATALOG_VERSION &&
+      value.foundByLevel && typeof value.foundByLevel === "object" &&
       !Array.isArray(value.foundByLevel)) {
     for (const level of LEVELS) {
       const found = value.foundByLevel[level.id];
@@ -42,6 +46,7 @@ export function normalizeProgress(value) {
   }
 
   return {
+    catalogVersion: CATALOG_VERSION,
     activeCategoryId: categoryIds.has(value.activeCategoryId)
       ? value.activeCategoryId
       : fresh.activeCategoryId,
@@ -52,7 +57,8 @@ export function normalizeProgress(value) {
     foundByLevel,
     hintCredits,
     hasPass: value.hasPass === true,
-    passHintsGranted: value.passHintsGranted === true
+    passHintsGranted: value.passHintsGranted === true,
+    ageConfirmed: value.catalogVersion === CATALOG_VERSION && value.ageConfirmed === true
   };
 }
 
@@ -79,11 +85,20 @@ export function saveProgress(storage, progress) {
 
 export function canAccessCategory(categoryId, progress) {
   const category = CATEGORIES.find((item) => item.id === categoryId);
-  return Boolean(category && (category.free || progress.hasPass));
+  return Boolean(category && (category.free || progress.hasPass || category.previewLevels > 0));
+}
+
+export function isPassRequiredForLevel(level, progress) {
+  const category = CATEGORIES.find((item) => item.id === level?.categoryId);
+  return Boolean(category && !category.free && !progress.hasPass &&
+    level.localLevel > category.previewLevels);
 }
 
 export function isLevelUnlocked(level, progress) {
-  if (!level || !canAccessCategory(level.categoryId, progress)) return false;
+  const category = CATEGORIES.find((item) => item.id === level?.categoryId);
+  if (!level || !category || !canAccessCategory(level.categoryId, progress) ||
+      (category.ageRestricted && !progress.ageConfirmed) ||
+      isPassRequiredForLevel(level, progress)) return false;
   if (level.localLevel === 1) return true;
   const previous = LEVELS.find((item) =>
     item.categoryId === level.categoryId && item.localLevel === level.localLevel - 1
@@ -120,5 +135,11 @@ export function grantPass(progress) {
 export function grantHintPack(progress) {
   const next = normalizeProgress(progress);
   next.hintCredits = Math.min(9999, next.hintCredits + 20);
+  return next;
+}
+
+export function grantHintReward(progress) {
+  const next = normalizeProgress(progress);
+  next.hintCredits = Math.min(9999, next.hintCredits + 1);
   return next;
 }

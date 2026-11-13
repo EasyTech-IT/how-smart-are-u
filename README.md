@@ -2,8 +2,9 @@
 
 An original, offline-first word-search game built for phones. It has no login
 or account: level progress and hint credits stay on the device. The game has
-200 levels across eight original landscapes, with a one-time pass planned for
-five premium landscapes, ad-free play, and 50 bonus hints.
+250 levels across ten themed worlds. Three worlds are fully free (75 levels);
+the seven Pass worlds include 33 free preview levels, with the remaining 142
+levels unlocked by a one-time Pass purchase.
 
 ![Moss & Letters logo](assets/logo.svg)
 
@@ -25,14 +26,24 @@ static web app to `dist/`; it can also be hosted as a static site.
 ## Game
 
 - Play offline after the app shell has loaded once.
-- Choose from three free landscapes; five more are pass-locked.
-- Progress through 200 increasingly challenging levels.
+- Choose from three fully free worlds and preview all seven Pass worlds.
+- Progress through 250 increasingly challenging levels.
+- Premium previews are five levels per world, except Spicy Secrets (three).
+  The category uses a local 18+ self-confirmation, not verified age checking.
+- Switch between dark-forest and warm-paper animated backgrounds. Reduced
+  motion preferences use a static background.
+- Interface effects and a relaxing original ambient progression are generated
+  with Web Audio; no third-party music recording is bundled.
+- Haptic feedback is available on supported devices and can be turned off in
+  Settings.
 - Find words by dragging, tapping endpoints, or using the keyboard.
 - Levels save locally. Completing a level grants one hint credit.
 - Pass and hint-pack purchases use official app-store billing through
   RevenueCat when platform keys and store products are configured.
 - AdMob banners are consent-gated, shown only outside active puzzles, and
-  hidden for pass owners. No interstitial ads interrupt gameplay.
+  hidden for pass owners. Players may opt into a rewarded video for one hint;
+  the hint is granted only when the SDK confirms the reward. The Pass disables
+  banners and rewarded ads. No interstitial ads interrupt gameplay.
 
 The purchase and ad buttons remain unavailable until their platform
 configuration is supplied. No credentials or real store product IDs are
@@ -68,8 +79,9 @@ Xcode; they cannot be produced on Windows.
 4. Configure AdMob app IDs and banner units. Set `ADMOB_APP_ID` in the
    Android build environment and the matching `VITE_ADMOB_*` values in `.env`;
    set the Xcode `ADMOB_APP_ID` build setting and matching iOS `VITE_ADMOB_*`
-   values for iOS. Create and publish the relevant consent messages in Google
-   UMP before enabling ads.
+   values for iOS. Add rewarded-ad unit IDs for each platform to enable the
+   optional hint offer. Create and publish the relevant consent messages in
+   Google UMP before enabling ads.
 5. Rebuild and test purchases, restore, consent, and ad-free behavior on real
    devices using store sandbox accounts.
 
@@ -82,8 +94,8 @@ The app's **Info** tab links to German-language drafts for the imprint,
 privacy notice, and terms under `public/legal/`. They are intentionally
 marked as drafts and must not be published as final legal notices. The privacy
 notice describes the current offline/local-save design and identifies
-RevenueCat, Apple/Google billing, and AdMob/UMP as conditional providers when
-those features are enabled.
+RevenueCat, Apple/Google billing, and AdMob/UMP as providers whose final
+disclosures depend on the production configuration.
 
 Copy `legal/operator-details.template.md` to the ignored local file
 `legal/operator-details.local.md` and complete it on your computer. The local
@@ -91,9 +103,9 @@ file is excluded from Git. It lists the publisher, contact, hosting, target
 countries, and data-processing facts needed to complete the drafts. Do not
 put passwords, private API keys, payment details, or signing keys in it.
 Have the final notices reviewed for the publisher's jurisdiction and actual
-provider configuration. The contact details supplied so far are included in
-the drafts; the full legal name, legal form, and complete postal address are
-still needed before the imprint can be finalized.
+provider configuration. The provided business label, location, email, website,
+and phone number are included. The full legal name and complete postal address
+are still needed before the imprint can be finalized.
 
 The existing Stripe account is not needed for mobile-game purchases: the
 pass and hint credits are digital app functionality, so the standard Google
@@ -114,7 +126,7 @@ branding, screenshots, or puzzle content is included.
 
 ## Project notes
 
-- `src/game-logic.js` contains the deterministic 200-level catalog and puzzle
+- `src/game-logic.js` contains the deterministic 250-level catalog and puzzle
   generation.
 - `src/progress.js` validates and persists local progress and rewards.
 - `src/store.js` handles the native lifetime pass, hint pack, and restore.

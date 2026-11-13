@@ -10,18 +10,22 @@ import {
 } from "./game-logic.js";
 import { formatCopy } from "./game-copy.js";
 import { playUiSound, setAmbience } from "./game-audio.js";
+import { playHaptic as triggerHaptic } from "./game-haptics.js";
 import { loadSettings, saveSettings } from "./game-settings.js";
+import { canOfferRewardHint, shouldShowAdBanner } from "./ad-access.js";
 import {
   canAccessCategory,
   completeLevel,
   freshProgress,
   grantHintPack,
+  grantHintReward,
   grantPass,
+  isPassRequiredForLevel,
   isLevelUnlocked,
   loadProgress,
   saveProgress
 } from "./progress.js";
-import { hideAdBanner, initializeAds, showAdBanner } from "./ads.js";
+import { hideAdBanner, initializeAds, showAdBanner, showRewardedHintAd } from "./ads.js";
 import {
   hasPassEntitlement,
   initializeStore,
@@ -33,6 +37,7 @@ const elements = {
   app: document.querySelector("#app"),
   adSlot: document.querySelector("#ad-slot"),
   bottomNav: document.querySelector("#bottom-nav"),
+  stickyPassButton: document.querySelector("#sticky-pass-button"),
   walletCount: document.querySelector("#wallet-count"),
   walletLabel: document.querySelector("#wallet-label"),
   homeTitleFirst: document.querySelector("#home-title-first"),
@@ -57,7 +62,12 @@ const elements = {
   gameMessage: document.querySelector("#game-message"),
   hintButton: document.querySelector("#hint-button"),
   hintCount: document.querySelector("#hint-count"),
+  rewardHintButton: document.querySelector("#reward-hint-button"),
+  rewardHintLabel: document.querySelector("#reward-hint-label"),
   completionDialog: document.querySelector("#completion-dialog"),
+  ageDialog: document.querySelector("#age-dialog"),
+  ageConfirmButton: document.querySelector("#age-confirm-button"),
+  ageCancelButton: document.querySelector("#age-cancel-button"),
   completionTitle: document.querySelector("#completion-title"),
   completionCopy: document.querySelector("#completion-copy"),
   rewardLine: document.querySelector("#reward-line"),
@@ -71,6 +81,7 @@ const elements = {
   languageSetting: document.querySelector("#language-setting"),
   themeSetting: document.querySelector("#theme-setting"),
   soundSetting: document.querySelector("#sound-setting"),
+  hapticsSetting: document.querySelector("#haptics-setting"),
   ambienceSetting: document.querySelector("#ambience-setting"),
   settingsNote: document.querySelector("#settings-note"),
   liveAnnouncement: document.querySelector("#live-announcement")
@@ -102,12 +113,14 @@ let selectionPath = [];
 let tapAnchor = null;
 let pointerStartIndex = null;
 let activePointerId = null;
+let pendingAgeCategoryId = null;
 let hintedWord = null;
 let hintTimer = null;
 let storeState = { ready: false, reason: "", hasPass: false };
-let adsState = { ready: false, bannerId: "" };
+let adsState = { ready: false, bannerId: "", rewardedId: "" };
 let bannerVisible = false;
 let bannerUpdate = Promise.resolve();
+let rewardAdInProgress = false;
 
 function setMessage(message, kind = "info") {
   elements.gameMessage.textContent = message;
@@ -149,6 +162,8 @@ function applyTranslations() {
     ["#pass-title", "passTitle"],
     ["#pass-description", "passDescription"],
     ["#pass-benefits", "passBenefits"],
+    ["#sticky-pass-label", "stickyPass"],
+    ["#sticky-pass-button", "stickyPassAria", "aria-label"],
     ["#hints-eyebrow", "hintsEyebrow"],
     ["#hints-title", "hintsTitle"],
     ["#hints-description", "hintsDescription"],
@@ -161,7 +176,13 @@ function applyTranslations() {
     ["#theme-dark", "themeDark"],
     ["#theme-paper", "themePaper"],
     ["#sound-label", "soundLabel"],
+    ["#haptics-label", "hapticsLabel"],
     ["#ambience-label", "ambienceLabel"],
+    ["#age-gate-eyebrow", "ageGateEyebrow"],
+    ["#age-gate-title", "ageGateTitle"],
+    ["#age-gate-description", "ageGateDescription"],
+    ["#age-confirm-button", "ageGateConfirm"],
+    ["#age-cancel-button", "ageGateCancel"],
     ["#privacy-title", "privacyTitle"],
     ["#privacy-description", "privacyDescription"],
     ["#imprint-title", "imprintTitle"],
@@ -194,6 +215,7 @@ function applyTranslations() {
   elements.languageSetting.value = settings.language;
   elements.themeSetting.value = settings.theme;
   elements.soundSetting.checked = settings.sound;
+  elements.hapticsSetting.checked = settings.haptics;
   elements.ambienceSetting.checked = settings.ambience;
   elements.app.dataset.theme = settings.theme;
 }
@@ -226,6 +248,22 @@ function playSound(kind) {
   }
 }
 
+function playHaptic(kind) {
+  if (!settings.haptics) return;
+  void triggerHaptic(kind).catch((error) => {
+    console.error("Haptic feedback could not be played.", error);
+  });
+}
+
+function playFeedback(kind) {
+  playSound(kind);
+  playHaptic(kind);
+}
+
+function ownsPass() {
+  return progress.hasPass || storeState.hasPass;
+}
+
 function completedCount(categoryId) {
   return progress.completedLevelIds.filter((id) =>
     LEVELS.some((level) => level.id === id && level.categoryId === categoryId)
@@ -233,12 +271,13 @@ function completedCount(categoryId) {
 }
 
 function nextPlayableLevel(categoryId = progress.activeCategoryId) {
-  const level = catalog.levels.find((item) =>
+  return catalog.levels.find((item) =>
     item.categoryId === categoryId &&
     !progress.completedLevelIds.includes(item.id) &&
     isLevelUnlocked(item, progress)
-  );
-  return level || catalog.levels.find((item) => item.categoryId === categoryId) || catalog.levels[0];
+  ) || catalog.levels.find((item) =>
+    !progress.completedLevelIds.includes(item.id) && isLevelUnlocked(item, progress)
+  ) || catalog.levels.find((item) => isLevelUnlocked(item, progress)) || catalog.levels[0];
 }
 
 function updateWallet() {
@@ -262,13 +301,18 @@ function showScreen(screen) {
     if (active) button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
   });
+  renderRewardHintButton();
   syncAdBanner();
 }
 
 function syncAdBanner() {
   bannerUpdate = bannerUpdate.then(async () => {
-    const shouldShow = adsState.ready && !progress.hasPass &&
-      currentScreen !== "game" && currentScreen !== "shop" && currentScreen !== "info";
+    const shouldShow = shouldShowAdBanner({
+      ready: adsState.ready,
+      bannerId: adsState.bannerId,
+      hasPass: ownsPass(),
+      screen: currentScreen
+    });
     if (shouldShow && !bannerVisible) {
       elements.app.classList.add("has-ad");
       elements.adSlot.hidden = false;
@@ -307,11 +351,11 @@ function renderHome() {
 }
 
 function renderStoreState() {
-  const ownsPass = progress.hasPass || storeState.hasPass;
+  const passOwned = ownsPass();
   const passPackage = storeState.passPackage;
   const hintPackage = storeState.hintsPackage;
-  elements.buyPassButton.disabled = !storeState.ready || !passPackage || ownsPass;
-  elements.buyPassButton.textContent = ownsPass
+  elements.buyPassButton.disabled = !storeState.ready || !passPackage || passOwned;
+  elements.buyPassButton.textContent = passOwned
     ? t("passOwned")
     : passPackage
       ? t("buyPass", { price: passPackage.product.priceString })
@@ -325,8 +369,28 @@ function renderStoreState() {
     : t("storeSetupNeeded");
   elements.restorePurchasesButton.disabled = !storeState.ready;
   elements.restorePurchasesButton.textContent = t("restorePurchases");
+  elements.stickyPassButton.hidden = passOwned;
   elements.storeNote.textContent = localizedStoreReason() ||
     (storeState.ready ? t("storeReady") : t("storeNotReady"));
+  renderRewardHintButton();
+}
+
+function renderRewardHintButton() {
+  const passOwned = ownsPass();
+  const available = canOfferRewardHint({
+    ready: adsState.ready,
+    rewardedId: adsState.rewardedId,
+    hasPass: passOwned,
+    screen: currentScreen
+  });
+  elements.rewardHintButton.hidden = currentScreen !== "game" || passOwned;
+  elements.rewardHintButton.disabled = !available || rewardAdInProgress;
+  elements.rewardHintLabel.textContent = available || rewardAdInProgress
+    ? t("watchAdHint")
+    : t("rewardAdSetup");
+  elements.rewardHintButton.setAttribute("aria-label", t(
+    available ? "rewardHintAria" : "rewardAdSetupAria"
+  ));
 }
 
 function localizedStoreReason() {
@@ -342,28 +406,37 @@ function localizedStoreReason() {
 function renderCategories() {
   elements.categoryGrid.replaceChildren();
   const symbols = {
-    grove: "♧",
-    shore: "≈",
-    hearth: "⌂",
-    wilds: "✧",
-    starlight: "☾",
-    market: "✿",
-    highlands: "△",
-    wonder: "◇"
+    grove: "◉",
+    shore: "✦",
+    hearth: "⌖",
+    wilds: "▱",
+    starlight: "✧",
+    market: "▣",
+    highlands: "♫",
+    wonder: "♡",
+    "brain-quest": "∴",
+    "music-stars": "♪"
   };
 
   for (const [index, category] of catalog.categories.entries()) {
     const count = completedCount(category.id);
     const accessible = canAccessCategory(category.id, progress);
+    const previewOnly = !category.free && !ownsPass();
+    const status = category.free || ownsPass()
+      ? t("categoryProgress", { completed: count })
+      : t(category.ageRestricted ? "categoryAdultPreview" : "categoryPreview", {
+        count: category.previewLevels
+      });
     const card = document.createElement("button");
     card.type = "button";
     card.className = "category-card";
     card.dataset.categoryId = category.id;
     card.dataset.locked = String(!accessible);
+    card.dataset.preview = String(previewOnly);
     card.style.setProperty("--card-order", String(index));
     card.setAttribute("aria-label", t("categoryAria", {
       name: category.name,
-      progress: accessible ? t("categoryProgress", { completed: count }) : t("categoryLocked")
+      progress: accessible ? status : t("categoryLocked")
     }));
 
     const emblem = document.createElement("span");
@@ -375,25 +448,39 @@ function renderCategories() {
     const title = document.createElement("strong");
     title.textContent = category.name;
     const subtitle = document.createElement("small");
-    subtitle.textContent = accessible
-      ? t("categoryProgress", { completed: count })
-      : t("categoryLocked");
+    subtitle.textContent = accessible ? status : t("categoryLocked");
     copy.append(title, subtitle);
     const marker = document.createElement("span");
     marker.className = "category-marker";
     marker.setAttribute("aria-hidden", "true");
-    marker.textContent = accessible ? "→" : "⌑";
+    marker.textContent = previewOnly ? "✦" : accessible ? "→" : "⌑";
     card.append(emblem, copy, marker);
     elements.categoryGrid.append(card);
   }
 }
 
+function openPassShop(category) {
+  showScreen("shop");
+  elements.storeNote.textContent = t("storeSetupMessage", {
+    category: category.name,
+    count: category.previewLevels
+  });
+}
+
 function openCategory(categoryId) {
   const category = catalog.categories.find((item) => item.id === categoryId);
   if (!category) return;
+  if (category.ageRestricted && !progress.ageConfirmed) {
+    pendingAgeCategoryId = category.id;
+    elements.ageDialog.showModal();
+    return;
+  }
   if (!canAccessCategory(category.id, progress)) {
     showScreen("shop");
-    elements.storeNote.textContent = t("storeSetupMessage", { category: category.name });
+    elements.storeNote.textContent = t("storeSetupMessage", {
+      category: category.name,
+      count: category.previewLevels
+    });
     return;
   }
   selectedCategoryId = category.id;
@@ -417,20 +504,31 @@ function renderLevels() {
   for (const level of levels) {
     const isComplete = progress.completedLevelIds.includes(level.id);
     const unlocked = isLevelUnlocked(level, progress);
+    const passRequired = isPassRequiredForLevel(level, progress);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "level-node";
     button.dataset.completed = String(isComplete);
     button.dataset.locked = String(!unlocked);
+    button.dataset.passRequired = String(passRequired);
     button.dataset.current = String(level.id === progress.activeLevelId);
-    button.disabled = !unlocked;
-    button.textContent = isComplete ? "✓" : unlocked ? String(level.localLevel) : "·";
+    button.disabled = !unlocked && !passRequired;
+    button.textContent = isComplete ? "✓" : unlocked ? String(level.localLevel) : passRequired ? "✦" : "·";
     button.setAttribute("aria-label", t("levelAria", {
       category: category.name,
       level: level.localLevel,
-      state: isComplete ? t("levelCompleted") : unlocked ? t("levelReady") : t("levelLocked")
+      state: isComplete
+        ? t("levelCompleted")
+        : unlocked
+          ? t("levelReady")
+          : passRequired
+            ? t("levelPassLocked")
+            : t("levelLocked")
     }));
-    button.addEventListener("click", () => startLevel(level));
+    button.addEventListener("click", () => {
+      if (passRequired) openPassShop(category);
+      else startLevel(level);
+    });
     elements.levelPath.append(button);
   }
 }
@@ -563,6 +661,7 @@ function invalidSelection() {
   renderGridStates();
   elements.grid.classList.add("has-invalid-selection");
   setMessage(t("invalidSelection"), "warning");
+  playFeedback("error");
   window.setTimeout(() => elements.grid.classList.remove("has-invalid-selection"), 260);
 }
 
@@ -583,10 +682,12 @@ function finishLevel() {
     level.categoryId === currentLevel.categoryId &&
     level.localLevel === currentLevel.localLevel + 1
   );
-  elements.nextLevelButton.textContent = next ? t("continueTrail") : t("choosePath");
+  elements.nextLevelButton.textContent = next
+    ? (isPassRequiredForLevel(next, progress) ? t("unlockPass") : t("continueTrail"))
+    : t("choosePath");
   elements.nextLevelButton.dataset.nextLevelId = next?.id || "";
   if (!elements.completionDialog.open) elements.completionDialog.showModal();
-  playSound("complete");
+  playFeedback("complete");
 }
 
 function acceptPath(path) {
@@ -611,9 +712,8 @@ function acceptPath(path) {
     word,
     left: currentLevel.words.length - foundWords.size
   }), "success");
-  playSound("found");
-
   if (foundWords.size === currentLevel.words.length) finishLevel();
+  else playFeedback("found");
 }
 
 function handleTap(index) {
@@ -621,6 +721,7 @@ function handleTap(index) {
     tapAnchor = index;
     updateSelection([index]);
     setMessage(t("firstLetter"));
+    playFeedback("select");
     return;
   }
   const path = pathBetween(tapAnchor, index, currentLevel.gridSize);
@@ -680,6 +781,7 @@ function onPointerUp(event) {
   tapAnchor = start;
   updateSelection([start]);
   setMessage(t("firstLetter"));
+  playFeedback("select");
 }
 
 function onGridKeyDown(event) {
@@ -717,6 +819,7 @@ function useHint() {
   if (!currentLevel || foundWords.size === currentLevel.words.length) return;
   if (progress.hintCredits < 1) {
     setMessage(t("noHints"), "warning");
+    playFeedback("error");
     return;
   }
   const word = currentLevel.words.find((candidate) => !foundWords.has(candidate));
@@ -729,7 +832,7 @@ function useHint() {
   updateWallet();
   persistProgress();
   setMessage(t("hintMessage"), "success");
-  playSound("hint");
+  playFeedback("hint");
   clearTimeout(hintTimer);
   hintTimer = window.setTimeout(() => {
     hintedWord = null;
@@ -737,7 +840,61 @@ function useHint() {
   }, 1600);
 }
 
+async function watchRewardHintAd() {
+  if (!canOfferRewardHint({
+    ready: adsState.ready,
+    rewardedId: adsState.rewardedId,
+    hasPass: ownsPass(),
+    screen: currentScreen
+  })) {
+    setMessage(t("rewardAdSetup"), "warning");
+    playFeedback("error");
+    return;
+  }
+
+  rewardAdInProgress = true;
+  renderRewardHintButton();
+  setMessage(t("rewardAdPreparing"));
+  try {
+    const earned = await showRewardedHintAd(adsState.rewardedId);
+    if (!earned) {
+      setMessage(t("rewardAdNotEarned"), "warning");
+      playFeedback("error");
+      return;
+    }
+
+    progress = grantHintReward(progress);
+    updateWallet();
+    const saved = persistProgress();
+    if (saved) setMessage(t("rewardAdGranted"), "success");
+    playSound("hint");
+    playHaptic("success");
+  } catch (error) {
+    console.error("Rewarded hint ad could not be completed.", error);
+    setMessage(t("rewardAdNotEarned"), "warning");
+    playFeedback("error");
+  } finally {
+    rewardAdInProgress = false;
+    renderRewardHintButton();
+  }
+}
+
 function setupEvents() {
+  document.addEventListener("click", (event) => {
+    const control = event.target instanceof Element
+      ? event.target.closest("button, a[href]")
+      : null;
+    if (!control || control.disabled || control.closest("#letter-grid") ||
+        control === elements.hintButton || control === elements.rewardHintButton) return;
+    playFeedback("tap");
+  }, true);
+  document.addEventListener("change", (event) => {
+    if (event.target instanceof HTMLSelectElement ||
+        (event.target instanceof HTMLInputElement && event.target.type === "checkbox")) {
+      playFeedback("toggle");
+    }
+  });
+
   document.querySelectorAll("[data-route]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.preventDefault();
@@ -761,10 +918,16 @@ function setupEvents() {
   });
   elements.categoryGrid.addEventListener("click", (event) => {
     const button = event.target.closest("[data-category-id]");
-    if (button) openCategory(button.dataset.categoryId);
+    if (button) {
+      openCategory(button.dataset.categoryId);
+    }
   });
-  elements.backCategories.addEventListener("click", () => showScreen("categories"));
-  elements.backLevels.addEventListener("click", showLevelsForCurrentCategory);
+  elements.backCategories.addEventListener("click", () => {
+    showScreen("categories");
+  });
+  elements.backLevels.addEventListener("click", () => {
+    showLevelsForCurrentCategory();
+  });
   elements.grid.addEventListener("pointerdown", onPointerDown);
   document.addEventListener("pointermove", onPointerMove);
   document.addEventListener("pointerup", onPointerUp);
@@ -782,10 +945,16 @@ function setupEvents() {
   });
   elements.grid.addEventListener("keydown", onGridKeyDown);
   elements.hintButton.addEventListener("click", useHint);
+  elements.rewardHintButton.addEventListener("click", () => {
+    void watchRewardHintAd();
+  });
   elements.nextLevelButton.addEventListener("click", () => {
     const level = catalog.levels.find((item) => item.id === elements.nextLevelButton.dataset.nextLevelId);
     elements.completionDialog.close();
-    if (level && isLevelUnlocked(level, progress)) startLevel(level);
+    if (level && isPassRequiredForLevel(level, progress)) {
+      const category = catalog.categories.find((item) => item.id === level.categoryId);
+      if (category) openPassShop(category);
+    } else if (level && isLevelUnlocked(level, progress)) startLevel(level);
     else showLevelsForCurrentCategory();
   });
   elements.returnMapButton.addEventListener("click", () => {
@@ -825,10 +994,32 @@ function setupEvents() {
   elements.soundSetting.addEventListener("change", () => {
     settings.sound = elements.soundSetting.checked;
     saveGameSettings();
-    if (settings.sound) playSound("hint");
+  });
+  elements.hapticsSetting.addEventListener("change", () => {
+    settings.haptics = elements.hapticsSetting.checked;
+    saveGameSettings();
   });
   elements.ambienceSetting.addEventListener("change", () => {
     void changeAmbience(elements.ambienceSetting.checked);
+  });
+  elements.ageConfirmButton.addEventListener("click", () => {
+    const categoryId = pendingAgeCategoryId;
+    if (!categoryId) {
+      elements.ageDialog.close();
+      return;
+    }
+    progress.ageConfirmed = true;
+    persistProgress();
+    elements.ageDialog.close();
+    pendingAgeCategoryId = null;
+    openCategory(categoryId);
+  });
+  elements.ageCancelButton.addEventListener("click", () => {
+    pendingAgeCategoryId = null;
+    elements.ageDialog.close();
+  });
+  elements.ageDialog.addEventListener("close", () => {
+    pendingAgeCategoryId = null;
   });
   window.addEventListener("pagehide", persistProgress);
   document.addEventListener("visibilitychange", () => {
@@ -877,8 +1068,10 @@ async function buyPass() {
     renderStoreState();
     syncAdBanner();
     elements.storeNote.textContent = t("passActive");
+    playFeedback("complete");
   } catch (error) {
     console.error("Pass purchase failed.", error);
+    playFeedback("error");
     renderStoreState();
     elements.storeNote.textContent = t("purchaseFailed", {
       error: error instanceof Error ? error.message : "Store error."
@@ -896,8 +1089,10 @@ async function buyHintPack() {
     updateWallet();
     renderStoreState();
     elements.storeNote.textContent = t("hintsAdded");
+    playFeedback("hint");
   } catch (error) {
     console.error("Hint pack purchase failed.", error);
+    playFeedback("error");
     renderStoreState();
     elements.storeNote.textContent = t("purchaseFailed", {
       error: error instanceof Error ? error.message : "Store error."
@@ -919,11 +1114,13 @@ async function restorePass() {
       renderCategories();
       syncAdBanner();
       resultMessage = t("passRestored");
+      playFeedback("complete");
     } else {
       resultMessage = t("noPassFound");
     }
   } catch (error) {
     console.error("Purchase restore failed.", error);
+    playFeedback("error");
     resultMessage = t("restoreFailed", {
       error: error instanceof Error ? error.message : "Store error."
     });
@@ -950,10 +1147,12 @@ async function initializeNativeFeatures() {
 
   try {
     adsState = await initializeAds();
+    renderRewardHintButton();
     if (adsState.ready) syncAdBanner();
   } catch (error) {
     console.error("AdMob initialization failed.", error);
-    adsState = { ready: false, bannerId: "" };
+    adsState = { ready: false, bannerId: "", rewardedId: "" };
+    renderRewardHintButton();
   }
 }
 

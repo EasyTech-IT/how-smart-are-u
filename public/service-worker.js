@@ -1,4 +1,4 @@
-const CACHE_NAME = "moss-and-letters-shell-v8";
+const CACHE_NAME = "moss-and-letters-shell-v9";
 const INDEX_URL = new URL("./index.html", self.registration.scope).href;
 const LEGAL_URLS = [
   "./legal/datenschutz.html",
