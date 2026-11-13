@@ -1,5 +1,7 @@
 # Moss & Letters
 
+**Repository:** `EasyTech-IT/how-smart-are-u`
+
 An original, offline-first word-search game built for phones. It has no login
 or account: level progress and hint credits stay on the device. The game has
 250 levels across ten themed worlds. Three worlds are fully free (75 levels);
